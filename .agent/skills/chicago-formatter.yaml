@@ -1,0 +1,15 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: chicago-formatter
+purpose: Render citations in chicago-author-date via citation adapter.
+inputs:
+  - csl_records
+  - style_name
+outputs:
+  - bibliography_text
+  - in_text_citation
+rules:
+  - default_style_chicago_author_date
+  - do_not_render_if_csl_invalid
+forbidden:
+  - handcrafted_citation_strings

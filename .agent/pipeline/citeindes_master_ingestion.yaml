@@ -1,0 +1,100 @@
+pipeline:
+  name: citeindex_master_ingestion
+  version: 1.0
+  description: >
+    Master ingestion orchestrator for CiteIndex.
+    Detects input type (PDF, scanned PDF, web URL, media),
+    routes to the correct sub-pipeline, and ensures consistent
+    CSL JSON, Merkle tree, and corpus storage.
+
+inputs:
+  type: file_or_url
+  accepted_formats:
+    pdf:
+      - .pdf
+    media_audio:
+      - .mp3
+      - .wav
+      - .m4a
+    media_video:
+      - .mp4
+      - .mkv
+      - .webm
+    url:
+      - http
+      - https
+
+steps:
+  - id: detect_resource_type
+    tool: internal
+    description: >
+      Determine whether input is:
+      - digital PDF
+      - scanned PDF
+      - web URL
+      - local media file (audio/video)
+      - media URL (audio/video)
+    outputs:
+      - resource_type
+      - normalized_input_path_or_url
+
+  - id: route_to_pipeline
+    tool: internal
+    description: >
+      Route the resource to the corresponding sub-pipeline based on `resource_type`.
+    routes:
+      digital_pdf:
+        pipeline: digital_pdf_ingestion.yaml
+      scanned_pdf:
+        pipeline: scanned_pdf_ingestion.yaml
+      url_article:
+        pipeline: url_article_ingestion.yaml
+      media:
+        pipeline: media_ingestion.yaml
+    outputs:
+      - sub_pipeline_outputs
+
+  - id: standardize_csl_json
+    tool: internal
+    description: >
+      Ensure the CSL JSON produced by sub-pipelines has:
+        - deterministic `id` using content hash
+        - CiteIndex extensions: content_hash, merkle_root, ingestion_timestamp, source_type
+    inputs:
+      - sub_pipeline_outputs.csl_json
+    outputs:
+      - standardized_csl_json
+
+  - id: unify_storage
+    tool: filesystem
+    description: >
+      Store all ingested documents in a unified corpus layout:
+        corpus/
+          {document_hash}/
+            csl.json
+            document.json or transcript.json
+            merkle.json
+            media_metadata.json (if media)
+    inputs:
+      - sub_pipeline_outputs
+      - standardized_csl_json
+    outputs:
+      - document_path
+
+  - id: log_ingestion
+    tool: internal
+    description: >
+      Log ingestion event, including:
+        - input path or URL
+        - detected resource type
+        - CSL JSON id
+        - Merkle root
+        - ingestion timestamp
+    outputs:
+      - ingestion_log_entry
+
+outputs:
+  - document_path
+  - standardized_csl_json
+  - sub_pipeline_outputs
+  - ingestion_log_entry

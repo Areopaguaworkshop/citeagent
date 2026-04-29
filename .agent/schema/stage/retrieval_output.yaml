@@ -1,0 +1,20 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: retrieval_output
+type: object
+required: [schema_version, query_id, ranked_nodes]
+properties:
+  schema_version: {type: string}
+  query_id: {type: string}
+  ranked_nodes:
+    type: array
+    items:
+      type: object
+      required: [node_id, source_id, section_path, sha256, score_breakdown]
+      properties:
+        node_id: {type: string}
+        source_id: {type: string}
+        section_path: {type: string}
+        sha256: {type: string}
+        score_breakdown: {type: object}
+  candidate_relations: {type: array}

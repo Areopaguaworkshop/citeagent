@@ -1,0 +1,142 @@
+pipeline:
+  name: citeindex_media_ingestion
+  version: 1.0
+  description: >
+    Ingest audio or video media into CiteIndex by extracting metadata,
+    generating transcripts, and producing deterministic content hashes.
+
+inputs:
+  type:
+    - media_file
+    - media_url
+
+accepted_formats:
+  audio:
+    - mp3
+    - wav
+    - m4a
+  video:
+    - mp4
+    - mkv
+    - webm
+  urls:
+    - youtube
+    - vimeo
+    - podcast_feed
+
+steps:
+  - id: resolve_media_source
+    tool: internal
+    description: >
+      Detect whether input is a local file or media URL.
+
+  - id: download_media
+    condition: input_type == url
+    tool: yt-dlp
+    description: >
+      Download media and extract metadata from online platforms.
+    outputs:
+      - media_file
+      - title
+      - uploader
+      - upload_date
+      - duration
+      - platform
+
+  - id: extract_audio
+    tool: ffmpeg
+    description: >
+      Convert media file to standardized audio format for transcription.
+    output_format: wav
+    outputs:
+      - audio_track
+
+  - id: transcribe_audio
+    tool: whisperx
+    description: >
+      Generate timestamped transcript with word-level alignment.
+    outputs:
+      - transcript_segments
+
+  - id: speaker_diarization
+    optional: true
+    tool: pyannote
+    description: >
+      Identify speaker segments in the transcript.
+    outputs:
+      - speaker_segments
+
+  - id: normalize_transcript
+    tool: internal
+    description: >
+      Clean transcript text and merge overlapping segments.
+    outputs:
+      - normalized_transcript
+
+  - id: segment_transcript
+    tool: internal
+    description: >
+      Create deterministic transcript segments using time windows
+      or sentence boundaries.
+    outputs:
+      - transcript_chunks
+
+  - id: compute_chunk_hashes
+    tool: internal
+    algorithm: sha256
+    description: >
+      Compute hashes for each transcript segment.
+    outputs:
+      - transcript_hashes
+
+  - id: build_merkle_tree
+    tool: internal
+    description: >
+      Build Merkle tree from transcript hashes.
+    outputs:
+      - merkle_root
+      - merkle_tree
+
+  - id: generate_csl_json
+    tool: internal
+    description: >
+      Generate CSL citation metadata for media resource.
+    template:
+      type: motion_picture
+    outputs:
+      - csl_item
+
+  - id: attach_citeindex_extension
+    tool: internal
+    description: >
+      Add CiteIndex-specific metadata fields.
+    extension_fields:
+      - transcript_hash
+      - merkle_root
+      - duration
+      - platform
+      - ingestion_timestamp
+    outputs:
+      - enhanced_csl_json
+
+  - id: generate_media_document_json
+    tool: internal
+    description: >
+      Store transcript segments with timestamps and hashes.
+    outputs:
+      - media_document_json
+
+  - id: store_artifacts
+    tool: filesystem
+    layout: corpus/
+      {document_hash}/
+      csl.json
+      transcript.json
+      merkle.json
+      media_metadata.json
+
+outputs:
+  - enhanced_csl_json
+  - media_document_json
+  - merkle_tree
+  - merkle_root

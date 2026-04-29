@@ -1,0 +1,21 @@
+{
+  "type": "book",
+  "author": [
+    {
+      "family": "Wang",
+      "given": "Qitao",
+      "literal": "王啟濤"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        2012
+      ]
+    ]
+  },
+  "title": "吐魯番出土文獻詞典 (Turpan Unearthed Documents Dictionary)",
+  "publisher": "四川出版集團 (Sichuan Publishing Group)",
+  "ISBN": "978-7-5531-0060-9",
+  "id": "wang-2012-吐魯番出土文獻詞典"
+}

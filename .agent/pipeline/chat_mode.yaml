@@ -1,0 +1,61 @@
+# LEGACY NOTE:
+# This pipeline describes the older Python-first chat flow.
+# Current canonical architecture is documented in instruction/Summary.md and
+# instruction/contracts/*.
+
+pipeline:
+  name: chat-model
+  description: |
+    Deterministic chat system using JSON/CSL sources, with automatic memory storage
+    and optional plugin invocation. Supports Ollama, OpenAI, Gemini backends.
+  steps:
+    - name: receive_user_input
+      type: input
+      description: Accept the user chat prompt.
+
+    - name: deterministic_retrieval
+      type: retrieval
+      description: Fetch relevant passages from JSON/CSL sources.
+      tool: rust_core_index
+      output: retrieved_context
+
+    - name: plugin_invoke
+      type: plugin
+      description: Run plugin if relevant command detected.
+      optional: true
+      tool: rust_plugin_loader
+      input: user_prompt
+      output: plugin_output
+
+    - name: assemble_prompt
+      type: transform
+      description: Merge user prompt, retrieved context, and plugin output into LLM input.
+      input:
+        - user_prompt
+        - retrieved_context
+        - plugin_output
+      output: llm_prompt
+
+    - name: call_llm
+      type: llm
+      description: Call selected LLM backend (Ollama / OpenAI / Gemini).
+      input: llm_prompt
+      config:
+        backend: dynamic
+        temperature: 0.2
+        max_tokens: 1024
+      output: llm_response
+
+    - name: save_memory
+      type: persistence
+      description: |
+        Save user query and LLM response in PostgreSQL and Merkle memory.
+      input:
+        - user_prompt
+        - llm_response
+      tool: rust_memory_manager
+
+    - name: output_response
+      type: output
+      description: Display LLM response to user.
+      input: llm_response

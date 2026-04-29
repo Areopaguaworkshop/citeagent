@@ -1,0 +1,29 @@
+pipeline:
+  name: plugins-add
+  description: |
+    Add a new plugin to CiteIndex from local folder or remote Git repository.
+    Validates manifest, runs optional test, and registers commands.
+  steps:
+    - name: detect_plugin_source
+      type: input
+      description: Accept plugin path or Git URL.
+
+    - name: validate_manifest
+      type: transform
+      description: Check `plugin.toml` for required fields (name, version, commands).
+      tool: rust_plugin_loader
+
+    - name: run_test_script
+      type: execute
+      description: Optional plugin test execution.
+      optional: true
+      tool: python_runtime
+
+    - name: register_plugin
+      type: transform
+      description: Register plugin commands with Rust core orchestrator.
+      tool: rust_plugin_loader
+
+    - name: output_status
+      type: output
+      description: Confirm plugin installed and active.

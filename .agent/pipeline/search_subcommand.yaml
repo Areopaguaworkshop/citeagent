@@ -1,0 +1,42 @@
+pipeline:
+  name: search
+  description: |
+    Keyword + fuzzy search on JSON/CSL sources. Optionally can include chat memories.
+  steps:
+    - name: receive_query
+      type: input
+      description: Accept search query from user.
+
+    - name: tokenization
+      type: transform
+      description: Split query into keywords.
+      tool: python_stdlib
+
+    - name: fuzzy_search
+      type: search
+      description: |
+        Search across sources using keyword match + fuzzy matching.
+        Uses RapidFuzz for scoring.
+      input: tokenized_query
+      output: search_results
+
+    - name: optional_chat_memory_search
+      type: retrieval
+      description: Search chat memory if user enables option.
+      optional: true
+      tool: rust_memory_manager
+      input: tokenized_query
+      output: memory_results
+
+    - name: merge_results
+      type: transform
+      description: Combine source and memory results.
+      input:
+        - search_results
+        - memory_results
+      output: combined_results
+
+    - name: output_search_results
+      type: output
+      description: Display results with page/paragraph references.
+      input: combined_results

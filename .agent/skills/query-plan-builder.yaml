@@ -1,0 +1,14 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: query-plan-builder
+purpose: Translate user query into deterministic retrieval plan.
+inputs:
+  - query_text
+  - session_context
+outputs:
+  - query_plan
+rules:
+  - keep_quoted_phrases_exact
+  - detect_blocking_ambiguity
+forbidden:
+  - answer_generation_in_planner

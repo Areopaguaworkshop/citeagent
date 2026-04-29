@@ -1,0 +1,293 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1776178956720,
+  "projectRoot": "/home/ajiap/project/citeindex",
+  "techStack": {
+    "languages": [
+      {
+        "name": "Python",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "pyproject.toml"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "pytest",
+        "version": null,
+        "category": "testing"
+      }
+    ],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": "pytest",
+    "lintCommand": "ruff check",
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "tests"
+    ],
+    "gitBranches": {
+      "defaultBranch": "0.10.04",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "__pycache__": {
+      "path": "__pycache__",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1776178956711,
+      "keyFiles": [
+        "test_install.cpython-312-pytest-8.3.5.pyc",
+        "test_page_extraction.cpython-312-pytest-8.3.5.pyc"
+      ]
+    },
+    "citeindex": {
+      "path": "citeindex",
+      "purpose": null,
+      "fileCount": 15,
+      "lastAccessed": 1776178956715,
+      "keyFiles": [
+        "__init__.py",
+        "citation_style.py",
+        "cli.py",
+        "file_converter.py",
+        "llm.py"
+      ]
+    },
+    "citeindex-rs": {
+      "path": "citeindex-rs",
+      "purpose": null,
+      "fileCount": 4,
+      "lastAccessed": 1776178956715,
+      "keyFiles": [
+        "Cargo.lock",
+        "Cargo.toml",
+        "citeindex-tui.log",
+        "config.toml"
+      ]
+    },
+    "corpus": {
+      "path": "corpus",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1776178956717,
+      "keyFiles": [
+        "_url_content_hashes.json",
+        "ingestion_log.jsonl"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 2,
+      "lastAccessed": 1776178956717,
+      "keyFiles": [
+        "cite_extractor-0.10.8-py3-none-any.whl",
+        "cite_extractor-0.10.8.tar.gz"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 1,
+      "lastAccessed": 1776178956717,
+      "keyFiles": [
+        "v12-runtime-migration.md"
+      ]
+    },
+    "example": {
+      "path": "example",
+      "purpose": null,
+      "fileCount": 55,
+      "lastAccessed": 1776178956717,
+      "keyFiles": [
+        "2013-tarsākyā:.json",
+        "2013_庄子集释_中华书局.json",
+        "2025_心念之病_光从东方来.md.json",
+        "A_Jiatandongfangjiaohui_2025_为何保守派倾向于认为其他教派是异端_Youtube.md.json",
+        "Bai-Wengu-白文固_2003_唐代僧籍管理制度.json"
+      ]
+    },
+    "instruction": {
+      "path": "instruction",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1776178956718,
+      "keyFiles": [
+        "CiteIndex Summary v11.pdf",
+        "CiteIndex v12 Full.pdf",
+        "Summary.md"
+      ]
+    },
+    "test_output": {
+      "path": "test_output",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1776178956718,
+      "keyFiles": [
+        "Media_content_from_URL.md.json"
+      ]
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 22,
+      "lastAccessed": 1776178956718,
+      "keyFiles": [
+        "Bai-Wengu-白文固_2003_唐代僧籍管理制度.pdf",
+        "Bai-Yudong-白玉冬-2018-丝路景教与汪古渊流.pdf",
+        "Guo-qingfan-庄子集释 (郭庆藩).pdf",
+        "README.md.backup",
+        "main.py.backup"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "README.md",
+      "accessCount": 1,
+      "lastAccessed": 1776179072424,
+      "type": "file"
+    },
+    {
+      "path": "pyproject.toml",
+      "accessCount": 1,
+      "lastAccessed": 1776179072470,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/agents/__init__.py",
+      "accessCount": 1,
+      "lastAccessed": 1776179079362,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/agents/v12_runtime.py",
+      "accessCount": 1,
+      "lastAccessed": 1776179096866,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/cli.py",
+      "accessCount": 1,
+      "lastAccessed": 1776179096911,
+      "type": "file"
+    },
+    {
+      "path": "citeindex-rs/Cargo.toml",
+      "accessCount": 1,
+      "lastAccessed": 1776179104160,
+      "type": "file"
+    },
+    {
+      "path": "docs/v12-runtime-migration.md",
+      "accessCount": 1,
+      "lastAccessed": 1776179104203,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/agents/models.py",
+      "accessCount": 1,
+      "lastAccessed": 1776179104260,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/llm.py",
+      "accessCount": 1,
+      "lastAccessed": 1776180019547,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/agents/chat.py",
+      "accessCount": 1,
+      "lastAccessed": 1776180019587,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/agents/generation.py",
+      "accessCount": 1,
+      "lastAccessed": 1776180019616,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/agents/query_planner.py",
+      "accessCount": 1,
+      "lastAccessed": 1776181697113,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/agents/integrity.py",
+      "accessCount": 1,
+      "lastAccessed": 1776181697156,
+      "type": "file"
+    },
+    {
+      "path": "citeindex-rs/crates/kernel/src/agent_runtime/mod.rs",
+      "accessCount": 1,
+      "lastAccessed": 1776182005187,
+      "type": "file"
+    },
+    {
+      "path": "citeindex-rs/crates/kernel/src/tools/mod.rs",
+      "accessCount": 1,
+      "lastAccessed": 1776182005231,
+      "type": "file"
+    },
+    {
+      "path": "citeindex-rs/crates/tui/src/app.rs",
+      "accessCount": 1,
+      "lastAccessed": 1776182005267,
+      "type": "file"
+    },
+    {
+      "path": "citeindex-rs/crates/core/src/engine.rs",
+      "accessCount": 1,
+      "lastAccessed": 1776182014922,
+      "type": "file"
+    },
+    {
+      "path": "citeindex-rs/crates/core/src/config.rs",
+      "accessCount": 1,
+      "lastAccessed": 1776182014951,
+      "type": "file"
+    },
+    {
+      "path": "citeindex-rs/crates/core/src/ipc.rs",
+      "accessCount": 1,
+      "lastAccessed": 1776182056484,
+      "type": "file"
+    },
+    {
+      "path": "citeindex-rs/config.toml",
+      "accessCount": 1,
+      "lastAccessed": 1776182061838,
+      "type": "file"
+    },
+    {
+      "path": "citeindex/agents/coordinator.py",
+      "accessCount": 1,
+      "lastAccessed": 1776182061876,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

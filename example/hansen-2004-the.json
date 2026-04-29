@@ -1,0 +1,20 @@
+{
+  "type": "book",
+  "author": [
+    {
+      "family": "Hansen",
+      "given": "Valerie"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        2004
+      ]
+    ]
+  },
+  "title": "The Silk Road",
+  "publisher": "Penguin Books",
+  "ISBN": "9780190208929",
+  "id": "hansen-2004-the"
+}

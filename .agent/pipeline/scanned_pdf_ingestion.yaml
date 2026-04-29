@@ -1,0 +1,258 @@
+pipeline:
+  name: citeindex_scanned_pdf_ingestion
+  version: 0.1
+  description: >
+    Deterministic ingestion pipeline for scanned academic PDFs.
+    Converts scanned PDFs into structured document JSON and
+    builds Merkle-tree hashes for deterministic citation retrieval.
+
+  goals:
+    - preserve academic structure
+    - support multi-column layouts
+    - separate footnotes from body text
+    - deterministic reading order
+    - Merkle-tree hashing for retrieval verification
+
+  inputs:
+    pdf:
+      type: scanned_pdf
+      required: true
+      description: raw scanned academic PDF
+
+  outputs:
+    document_json:
+      description: structured document representation
+      format: json
+
+    merkle_index:
+      description: deterministic Merkle tree for retrieval
+      format: json
+
+    citations:
+      description: extracted citations in CSL JSON
+      format: csl_json
+
+---
+
+stages:
+
+  - stage: pdf_normalization
+    tool: ocrmypdf
+    purpose: >
+      Convert scanned PDF into searchable PDF with OCR text layer.
+    input:
+      pdf: raw_input_pdf
+    output:
+      pdf: searchable_pdf
+    options:
+      deskew: true
+      clean: true
+      optimize: 3
+      language: eng
+      output_type: pdfa
+    determinism:
+      fixed_seed: true
+
+---
+
+  - stage: page_image_extraction
+    purpose: >
+      Convert each PDF page into image format for layout analysis.
+    input:
+      pdf: searchable_pdf
+    output:
+      page_images:
+        format: png
+        resolution: 300dpi
+    notes:
+      - maintain page numbering
+      - deterministic ordering
+
+---
+
+  - stage: layout_detection
+    tool: mineru
+    purpose: >
+      Detect document structure including columns, paragraphs,
+      tables, figures, and footnote regions.
+    input:
+      page_images
+    output:
+      layout_blocks:
+        schema:
+          page
+          block_id
+          block_type
+          bbox
+          column_id
+          reading_order
+    options:
+      detect_columns: true
+      detect_tables: true
+      detect_figures: true
+      detect_equations: true
+      detect_footnotes: true
+
+---
+
+  - stage: reading_order_resolution
+    purpose: >
+      Construct deterministic reading order for multi-column pages.
+    algorithm:
+      steps:
+        - group_blocks_by_page
+        - detect_columns_by_x_coordinate
+        - sort_columns_left_to_right
+        - within_column_sort_blocks_by_y
+        - append_footnotes_after_body
+    input:
+      layout_blocks
+    output:
+      ordered_blocks
+
+---
+
+  - stage: text_extraction
+    tool: tesseract
+    purpose: >
+      Extract text for each layout block with coordinate alignment.
+    input:
+      page_images
+      ordered_blocks
+    output:
+      text_blocks:
+        schema:
+          page
+          column
+          paragraph
+          block_type
+          text
+          bbox
+          confidence
+
+---
+
+  - stage: document_structure_builder
+    purpose: >
+      Build hierarchical academic document structure.
+    input:
+      text_blocks
+    output:
+      document_structure
+    schema:
+      document:
+        pages:
+          - page_number
+            columns:
+              - column_id
+                paragraphs:
+                  - paragraph_id
+                    lines
+            footnotes:
+              - footnote_id
+                text
+
+---
+
+  - stage: citation_extraction
+    tool: grobid
+    purpose: >
+      Extract scholarly citations and references from text blocks.
+    input:
+      document_structure
+    output:
+      citations:
+        format: csl_json
+      citation_markers:
+        schema:
+          citation_id
+          location:
+            page
+            column
+            paragraph
+          context_text
+
+---
+
+  - stage: merkle_tree_generation
+    purpose: >
+      Generate deterministic Merkle-tree hashes for document structure.
+    hash_algorithm: sha256
+    input:
+      document_structure
+    algorithm:
+      leaf_nodes:
+        - line
+        - footnote
+      aggregation:
+        paragraph = hash(lines)
+        column = hash(paragraphs)
+        page = hash(columns + footnotes)
+        document = hash(pages)
+    output:
+      merkle_tree:
+        schema:
+          node_id
+          node_type
+          hash
+          parent
+
+---
+
+  - stage: index_generation
+    purpose: >
+      Create deterministic retrieval index using Merkle tree nodes.
+    input:
+      merkle_tree
+      document_structure
+      citations
+    output:
+      retrieval_index:
+        schema:
+          hash
+          page
+          column
+          paragraph
+          text_reference
+
+---
+
+storage:
+
+  file_structure:
+    root:
+      /documents/{doc_id}/
+      /documents/{doc_id}/source.pdf
+      /documents/{doc_id}/normalized.pdf
+      /documents/{doc_id}/pages/
+      /documents/{doc_id}/layout.json
+      /documents/{doc_id}/structure.json
+      /documents/{doc_id}/citations.json
+      /documents/{doc_id}/merkle.json
+      /documents/{doc_id}/index.json
+
+---
+
+determinism:
+
+  guarantees:
+    - fixed OCR parameters
+    - deterministic reading order
+    - stable hashing algorithm
+    - consistent layout detection settings
+
+  purpose:
+    - identical input produces identical hashes
+    - supports citation verification
+    - enables reproducible academic retrieval
+
+---
+
+cli_interface:
+
+  command: citeindex ingest
+  arguments:
+    - input_pdf
+    - output_directory
+  example: |
+    citeindex ingest paper.pdf --out ./index/

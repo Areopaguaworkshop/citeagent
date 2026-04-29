@@ -1,0 +1,32 @@
+{
+  "type": "book",
+  "author": [
+    {
+      "literal": "",
+      "suffix": "【清】"
+    },
+    {
+      "literal": "郭庆沙",
+      "family": "Guo",
+      "given": "Qingsha"
+    }
+  ],
+  "editor": [
+    {
+      "literal": "王孝鱼",
+      "family": "Wang",
+      "given": "Xiaoyu"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        2013
+      ]
+    ]
+  },
+  "title": "庄子集释",
+  "publisher": "中华书局",
+  "ISBN": "978-7-101-09151-9",
+  "id": "2013_庄子集释_中华书局"
+}

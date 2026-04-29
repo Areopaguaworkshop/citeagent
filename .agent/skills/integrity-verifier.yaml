@@ -1,0 +1,16 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: integrity-verifier
+purpose: Verify hashes, proofs, and citation references before release.
+inputs:
+  - answer_machine_json
+  - nodes
+  - merkle_tree
+  - csl_registry
+outputs:
+  - integrity_report
+rules:
+  - fail_closed_on_unknown_state
+  - reject_on_any_hash_or_proof_failure
+forbidden:
+  - auto_fix_failed_evidence

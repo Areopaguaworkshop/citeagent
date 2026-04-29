@@ -1,0 +1,32 @@
+{
+  "type": "chapter",
+  "author": [
+    {
+      "family": "Takahashi",
+      "given": "Hidemi"
+    }
+  ],
+  "editor": [
+    {
+      "family": "HEUER",
+      "given": "Johannes DEN"
+    },
+    {
+      "family": "PATARIDZE",
+      "given": "Andrea SCHMIDT and Tamara"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        2014
+      ]
+    ]
+  },
+  "title": "TRANSCRIPTION OF SYRIAC IN CHINESE AND CHINESE IN SYRIAC SCRIPT IN THE TANG PERIOD",
+  "publisher": "PEETERS",
+  "container-title": "Scripts Beyond Borders A Survey of Allographic Traditions in the Euro-Mediterranean World",
+  "page": "329-",
+  "ISBN": "978-90-429-2646-2; 978-2-7584-OI59-9",
+  "id": "takahashi-2014-transcription"
+}

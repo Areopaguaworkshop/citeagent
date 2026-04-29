@@ -1,0 +1,15 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: csl-normalizer
+purpose: Normalize bibliographic metadata into valid CSL JSON using citation adapter.
+inputs:
+  - metadata_record
+  - doc_type
+outputs:
+  - csl_json
+rules:
+  - use_citation_repo_adapter_only
+  - reject_missing_identity_fields
+  - produce_stable_id_generation
+forbidden:
+  - fabricate_missing_fields

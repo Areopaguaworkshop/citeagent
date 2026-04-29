@@ -1,0 +1,32 @@
+version: 1.0.0
+schema_version: 1.0.0
+
+skills:
+  - skill_id: csl-normalizer
+    file: csl-normalizer.yaml
+  - skill_id: chicago-formatter
+    file: chicago-formatter.yaml
+  - skill_id: source-classifier
+    file: source-classifier.yaml
+  - skill_id: section-parser
+    file: section-parser.yaml
+  - skill_id: segmenter
+    file: segmenter.yaml
+  - skill_id: node-hasher
+    file: node-hasher.yaml
+  - skill_id: merkle-builder
+    file: merkle-builder.yaml
+  - skill_id: inverted-index-builder
+    file: inverted-index-builder.yaml
+  - skill_id: bm25-ranker
+    file: bm25-ranker.yaml
+  - skill_id: cross-source-linker
+    file: cross-source-linker.yaml
+  - skill_id: query-plan-builder
+    file: query-plan-builder.yaml
+  - skill_id: clarification-handler
+    file: clarification-handler.yaml
+  - skill_id: trace-json-assembler
+    file: trace-json-assembler.yaml
+  - skill_id: integrity-verifier
+    file: integrity-verifier.yaml

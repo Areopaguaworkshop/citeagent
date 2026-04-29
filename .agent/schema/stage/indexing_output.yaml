@@ -1,0 +1,10 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: indexing_output
+type: object
+required: [schema_version, inverted_index, section_index, cross_source_links]
+properties:
+  schema_version: {type: string}
+  inverted_index: {type: object}
+  section_index: {type: object}
+  cross_source_links: {type: array}

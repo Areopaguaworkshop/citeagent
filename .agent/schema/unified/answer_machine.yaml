@@ -1,0 +1,30 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: unified_answer_machine
+type: object
+required: [schema_version, query_id, answer, evidence]
+properties:
+  schema_version: {type: string}
+  query_id: {type: string}
+  answer: {type: string}
+  evidence:
+    type: array
+    items:
+      type: object
+      required:
+        - node_id
+        - source_id
+        - sha256
+        - document_merkle_root
+        - merkle_proof
+        - citation_key
+        - citation_rendered
+      properties:
+        node_id: {type: string}
+        source_id: {type: string}
+        sha256: {type: string}
+        document_merkle_root: {type: string}
+        merkle_proof: {type: array}
+        citation_key: {type: string}
+        citation_rendered: {type: string}
+        section_path: {type: string}

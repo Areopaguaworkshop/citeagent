@@ -1,0 +1,9 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: clarification_input
+type: object
+required: [schema_version, query_plan]
+properties:
+  schema_version: {type: string}
+  query_plan: {type: object}
+  dialog_state: {type: object}

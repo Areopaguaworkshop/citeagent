@@ -1,0 +1,28 @@
+{
+  "type": "book",
+  "author": [
+    {
+      "family": "Rui",
+      "given": "Chuanming",
+      "literal": "芮傳明"
+    }
+  ],
+  "editor": [
+    {
+      "family": "Yu",
+      "given": "Taishan",
+      "literal": "余太山"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        2014
+      ]
+    ]
+  },
+  "title": "摩尼教敦煌吐魯番文書譯釋與研究",
+  "publisher": "兰州大学出版社",
+  "ISBN": "978-7-311-04668-2",
+  "id": "rui-2014-摩尼教敦煌吐魯番文書譯釋與研究"
+}

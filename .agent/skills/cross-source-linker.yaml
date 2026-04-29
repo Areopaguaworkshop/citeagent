@@ -1,0 +1,15 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: cross-source-linker
+purpose: Propose richer cross-source relations among evidence nodes.
+inputs:
+  - nodes
+  - scored_nodes
+outputs:
+  - relation_candidates
+rules:
+  - only_between_different_sources
+  - allowed_relations_supports_contradicts_extends_parallels
+  - include_confidence_and_rationale
+forbidden:
+  - relation_without_node_evidence

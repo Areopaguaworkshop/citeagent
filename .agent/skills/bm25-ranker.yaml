@@ -1,0 +1,15 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: bm25-ranker
+purpose: Rank candidates with BM25 and deterministic tie-breaks.
+inputs:
+  - query_plan
+  - inverted_index
+  - nodes
+outputs:
+  - scored_nodes
+rules:
+  - apply_metadata_filter_first
+  - tie_break_exact_phrase_then_depth_then_node_id
+forbidden:
+  - semantic_vector_scoring

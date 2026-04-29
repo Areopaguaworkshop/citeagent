@@ -1,0 +1,26 @@
+{
+  "type": "book",
+  "author": [
+    {
+      "literal": "程俊英",
+      "family": "Cheng",
+      "given": "Junying"
+    },
+    {
+      "literal": "蔣見元",
+      "family": "Jiang",
+      "given": "Jianyuan"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        2017
+      ]
+    ]
+  },
+  "title": "詩經注析",
+  "publisher": "中華書局",
+  "volume": "下册",
+  "id": "Cheng_Junying_2017_詩經注析_中華書局"
+}

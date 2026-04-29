@@ -1,0 +1,32 @@
+# test output
+test_output/
+
+# Python generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+tests/**/*
+.env
+# venv
+.venv
+# corpus
+corpus/
+# instruction
+instruction/**/*
+
+# Rust
+target/
+Cargo.lock
+*.rs.bk
+*.pdb
+rust-tools.json
+rustfmt.toml
+.daplint
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

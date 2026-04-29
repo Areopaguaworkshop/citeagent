@@ -1,0 +1,27 @@
+# CiteIndex Configuration
+# See instruction/Summary.md for architecture overview.
+
+# Path to the ingested corpus
+corpus_root = "corpus"
+
+# Python binary for IPC (the Python engine)
+python_bin = "python"
+
+[llm]
+model = "ollama/qwen3"
+temperature = 0.1
+max_tokens = 1024
+
+[tui]
+theme = "dark"            # "dark" or "light"
+side_panel_collapsed = true
+side_panel_width_pct = 30
+cite_style = "chicago-author-date"
+
+[plugins]
+directory = "plugins"
+enabled = []
+
+[memory]
+backend = "file"          # "file" or "postgresql"
+# postgresql_url = "postgresql://localhost/citeindex"

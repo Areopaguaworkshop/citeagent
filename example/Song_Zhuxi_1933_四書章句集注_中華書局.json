@@ -1,0 +1,21 @@
+{
+  "type": "book",
+  "author": [
+    {
+      "literal": "宋朱熹",
+      "family": "Song",
+      "given": "Zhuxi"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        1933
+      ]
+    ]
+  },
+  "title": "四書章句集注",
+  "publisher": "中華書局",
+  "volume": "第一輯",
+  "id": "Song_Zhuxi_1933_四書章句集注_中華書局"
+}

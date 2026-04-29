@@ -1,0 +1,15 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: segmenter
+purpose: Segment section text into paragraph or line nodes.
+inputs:
+  - section_tree
+  - source_class
+outputs:
+  - node_units
+rules:
+  - secondary_to_paragraph
+  - primary_to_line
+  - normalize_whitespace_before_hash
+forbidden:
+  - mixed_granularity_in_single_source_without_rule

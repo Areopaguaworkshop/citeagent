@@ -1,0 +1,33 @@
+{
+  "type": "motion_picture",
+  "author": [
+    {
+      "family": "A",
+      "given": "Jiatandongfangjiaohui",
+      "literal": "阿甲谈东方教会"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        2025,
+        6,
+        16
+      ]
+    ]
+  },
+  "accessed": {
+    "date-parts": [
+      [
+        2025,
+        7,
+        25
+      ]
+    ]
+  },
+  "title": "为何保守派倾向于认为其他教派是异端？",
+  "publisher": "Youtube",
+  "container-title": "Youtube",
+  "URL": "https://www.youtube.com/watch?v=ekD_djt5fKc",
+  "id": "A_Jiatandongfangjiaohui_2025_为何保守派倾向于认为其他教派是异端_Youtube.md"
+}

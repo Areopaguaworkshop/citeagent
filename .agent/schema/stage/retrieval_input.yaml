@@ -1,0 +1,11 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: retrieval_input
+type: object
+required: [schema_version, resolved_query_plan, nodes, inverted_index]
+properties:
+  schema_version: {type: string}
+  resolved_query_plan: {type: object}
+  nodes: {type: array}
+  inverted_index: {type: object}
+  csl_registry: {type: array}

@@ -1,0 +1,16 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: ingestion_output
+type: object
+required: [schema_version, source_registry, csl_registry, nodes, tree, merkle]
+properties:
+  schema_version: {type: string}
+  source_registry: {type: array}
+  csl_registry: {type: array}
+  nodes: {type: array}
+  tree: {type: object}
+  merkle:
+    type: object
+    required: [document_roots]
+    properties:
+      document_roots: {type: array}

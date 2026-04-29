@@ -1,0 +1,13 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: integrity_output
+type: object
+required: [schema_version, status, checks, violations]
+properties:
+  schema_version: {type: string}
+  status:
+    type: string
+    enum: [approved, rejected, needs_clarification]
+  checks: {type: array}
+  violations: {type: array}
+  approved_answer_ref: {type: string}

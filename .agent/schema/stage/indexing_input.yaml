@@ -1,0 +1,9 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: indexing_input
+type: object
+required: [schema_version, nodes, tree]
+properties:
+  schema_version: {type: string}
+  nodes: {type: array}
+  tree: {type: object}

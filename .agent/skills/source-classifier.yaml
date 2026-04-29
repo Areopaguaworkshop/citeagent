@@ -1,0 +1,16 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: source-classifier
+purpose: Classify source as primary or secondary with override support.
+inputs:
+  - source_metadata
+  - source_content_sample
+  - is_primary_override
+outputs:
+  - source_class
+  - confidence
+rules:
+  - apply_override_when_present
+  - emit_confidence_and_rationale
+forbidden:
+  - silent_override

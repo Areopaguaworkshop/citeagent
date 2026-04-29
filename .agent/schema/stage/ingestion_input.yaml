@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: ingestion_input
+type: object
+required: [schema_version, source_manifest]
+properties:
+  schema_version: {type: string}
+  source_manifest:
+    type: array
+    items:
+      type: object
+      required: [source_id, source_path]
+      properties:
+        source_id: {type: string}
+        source_path: {type: string}
+        source_type_hint: {type: string}
+        is_primary_override: {type: boolean}

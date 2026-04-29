@@ -1,0 +1,43 @@
+pipeline:
+  name: rust-core-orchestration
+  description: |
+    Core orchestrator for CiteIndex. Manages Rust ↔ Python subprocesses,
+    plugin loading, ingestion, search, chat, TUI launch, and memory management.
+  steps:
+    - name: load_configuration
+      type: init
+      description: Load global settings, paths, LLM backends, and plugin config.
+
+    - name: load_plugins
+      type: plugin
+      description: Load available plugins (Rust + Python).
+
+    - name: trigger_ingestion
+      type: orchestrate
+      description: Run ingestion pipelines via Python subprocess.
+      tool: python_runtime
+      input: ingestion_files
+
+    - name: trigger_chat
+      type: orchestrate
+      description: Start chat pipeline with deterministic retrieval.
+      tool: python_runtime
+      input: user_prompt
+
+    - name: trigger_search
+      type: orchestrate
+      description: Start search pipeline (sources + optional memory).
+      tool: python_runtime
+      input: search_query
+
+    - name: launch_tui
+      type: interface
+      description: Launch full-screen TUI (Ratatui).
+
+    - name: manage_memory
+      type: persistence
+      description: Handle chat memory, Merkle verification, and updates.
+
+    - name: monitor_tasks
+      type: observer
+      description: Track ingestion, search, chat, and plugin execution.

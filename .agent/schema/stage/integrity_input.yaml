@@ -1,0 +1,11 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: integrity_input
+type: object
+required: [schema_version, answer_machine, nodes, merkle, csl_registry]
+properties:
+  schema_version: {type: string}
+  answer_machine: {type: object}
+  nodes: {type: array}
+  merkle: {type: object}
+  csl_registry: {type: array}

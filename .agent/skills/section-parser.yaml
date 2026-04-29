@@ -1,0 +1,14 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: section-parser
+purpose: Parse hierarchical document sections with stable ordering.
+inputs:
+  - source_text
+  - source_layout
+outputs:
+  - section_tree
+rules:
+  - deterministic_section_paths
+  - preserve_source_order
+forbidden:
+  - reorder_sections_for_style

@@ -1,0 +1,12 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: generation_input
+type: object
+required: [schema_version, query_id, user_query, retrieval_result, csl_registry]
+properties:
+  schema_version: {type: string}
+  query_id: {type: string}
+  user_query: {type: string}
+  retrieval_result: {type: object}
+  csl_registry: {type: array}
+  citation_style: {type: string}

@@ -1,0 +1,69 @@
+[
+  {
+    "total_page_number": 20
+  },
+  {
+    "total_token": 34862
+  },
+  {
+    "toc_content": null,
+    "toc_page_list": [],
+    "page_index_given_in_toc": "no"
+  },
+  {
+    "message": "len(group_texts): 2"
+  },
+  {
+    "message": "generate_toc: [{'structure': '1', 'title': '\u4e00\u3001\u50e7\u5c3c\u7ba1\uf9e4\u6a5f\u69cb\u7684\u56e0\u9769', 'physical_index': '<physical_index_1>'}, {'structure': '2', 'title': '\u4e8c\u3001\u50e7\u5c3c\u7c4d\u7c3f\u7684\u7ba1\uf9e4', 'physical_index': '<physical_index_3>'}, {'structure': '2.1', 'title': '(\u4e00)\u50e7\u5c3c\u7c4d\u7c3f\u7ba1\uf9e4\u5236\ufa01\u7684\u5275\u59cb', 'physical_index': '<physical_index_3>'}, {'structure': '2.2', 'title': '(\u4e8c)\u5510\u4ee3\u50e7\u5c3c\u4f9b\u5e33\u8fa6\u6cd5', 'physical_index': '<physical_index_4>'}, {'structure': '2.3', 'title': '(\u4e09)\u6b78\u7fa9\u8ecd\u6642\u671f\u7684\u50e7\u5c3c\u7c4d\u5e33', 'physical_index': '<physical_index_5>'}, {'structure': '3', 'title': '\u4e09\u3001\u50e7\u5c3c\u5243\ufa01\u5236\ufa01', 'physical_index': '<physical_index_8>'}, {'structure': '3.1', 'title': '(\u4e00)\u300c\u516c\ufa01\u300d\u8207\u79c1\ufa01\u7684\u885d\u7a81', 'physical_index': '<physical_index_8>'}, {'structure': '3.2', 'title': '(\u4e8c)\ufa01\u7252\u7684\u5275\ufa08\u53ca\u9812\u7d66\u8fa6\u6cd5', 'physical_index': '<physical_index_9>'}, {'structure': '3.3', 'title': '(\u4e09)\u8a66\u7d93\u5236\ufa01\u7684\u5be6\ufa08', 'physical_index': '<physical_index_12>'}, {'structure': '3.4', 'title': '(\u56db)\u9b3b\u8ce3\u5243\ufa01\u7684\u6700\u65e9\u5be6\ufa08', 'physical_index': '<physical_index_14>'}, {'structure': '4', 'title': '\u56db\u3001\u5bfa\u9662\u7ba1\uf9e4\u5236\ufa01', 'physical_index': '<physical_index_15>'}, {'structure': '4.1', 'title': '(\u4e00)\uf98c\u53f2\u4e0a\u8cdc\u984d\u5236\ufa01\u7684\u521d\u8208', 'physical_index': '<physical_index_15>'}, {'structure': '4.2', 'title': '(\u4e8c)\u8cdc\u984d\u5236\ufa01\u7684\u6210\u719f', 'physical_index': '<physical_index_16>'}]"
+  },
+  {
+    "message": "convert_physical_index_to_int: [{'structure': '1', 'title': '\u4e00\u3001\u50e7\u5c3c\u7ba1\uf9e4\u6a5f\u69cb\u7684\u56e0\u9769', 'physical_index': 1}, {'structure': '2', 'title': '\u4e8c\u3001\u50e7\u5c3c\u7c4d\u7c3f\u7684\u7ba1\uf9e4', 'physical_index': 3}, {'structure': '2.1', 'title': '(\u4e00)\u50e7\u5c3c\u7c4d\u7c3f\u7ba1\uf9e4\u5236\ufa01\u7684\u5275\u59cb', 'physical_index': 3}, {'structure': '2.2', 'title': '(\u4e8c)\u5510\u4ee3\u50e7\u5c3c\u4f9b\u5e33\u8fa6\u6cd5', 'physical_index': 4}, {'structure': '2.3', 'title': '(\u4e09)\u6b78\u7fa9\u8ecd\u6642\u671f\u7684\u50e7\u5c3c\u7c4d\u5e33', 'physical_index': 5}, {'structure': '3', 'title': '\u4e09\u3001\u50e7\u5c3c\u5243\ufa01\u5236\ufa01', 'physical_index': 8}, {'structure': '3.1', 'title': '(\u4e00)\u300c\u516c\ufa01\u300d\u8207\u79c1\ufa01\u7684\u885d\u7a81', 'physical_index': 8}, {'structure': '3.2', 'title': '(\u4e8c)\ufa01\u7252\u7684\u5275\ufa08\u53ca\u9812\u7d66\u8fa6\u6cd5', 'physical_index': 9}, {'structure': '3.3', 'title': '(\u4e09)\u8a66\u7d93\u5236\ufa01\u7684\u5be6\ufa08', 'physical_index': 12}, {'structure': '3.4', 'title': '(\u56db)\u9b3b\u8ce3\u5243\ufa01\u7684\u6700\u65e9\u5be6\ufa08', 'physical_index': 14}, {'structure': '4', 'title': '\u56db\u3001\u5bfa\u9662\u7ba1\uf9e4\u5236\ufa01', 'physical_index': 15}, {'structure': '4.1', 'title': '(\u4e00)\uf98c\u53f2\u4e0a\u8cdc\u984d\u5236\ufa01\u7684\u521d\u8208', 'physical_index': 15}, {'structure': '4.2', 'title': '(\u4e8c)\u8cdc\u984d\u5236\ufa01\u7684\u6210\u719f', 'physical_index': 16}]"
+  },
+  {
+    "mode": "process_toc_with_page_numbers",
+    "accuracy": 1.0,
+    "incorrect_results": []
+  },
+  {
+    "message": "Checking title appearance in start concurrently"
+  },
+  {
+    "message": "Response: {'thinking': \"The page_text starts with publication information '\u300a\u666e\u9580\u5b78\u5831\u300b\u7b2c 15\u671f / 2003\uf98e5\u6708' and then contains several paragraphs of text discussing the history of Tang dynasty monastic management before the section title '(\u4e00)\u50e7\u5c3c\u7c4d\u7c3f\u7ba1\uf9e4\u5236\ufa01\u7684\u5275\u59cb' appears. Therefore, the section does not start at the beginning of the page_text.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '(\u4e8c)\u5510\u4ee3\u50e7\u5c3c\u4f9b\u5e33\u8fa6\u6cd5' appears in the middle of the page_text, following header information and a substantial amount of text from a previous section. Therefore, it does not start at the beginning of the page_text.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '(\u4e09)\u6b78\u7fa9\u8ecd\u6642\u671f\u7684\u50e7\u5c3c\u7c4d\u5e33' appears near the end of the page_text, after the header, publication information, and the content of the previous section. Therefore, it does not start at the beginning of the page_text.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '(\u4e00)\uf98c\u53f2\u4e0a\u8cdc\u984d\u5236\ufa01\u7684\u521d\u8208' appears in the middle of the page_text, after the journal header, article title, and the previous section '\u56db\u3001\u5bfa\u9662\u7ba1\uf9e4\u5236\ufa01'. Therefore, it does not start at the beginning of the page_text.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The page_text contains a significant amount of content before the section title '(\u56db)\u9b3b\u8ce3\u5243\ufa01\u7684\u6700\u65e9\u5be6\ufa01'. The beginning of the page_text includes the journal header ('\u300a\u666e\u9580\u5b78\u5831\u300b\u7b2c 15\u671f...'), publication information, and the conclusion of the previous section ('\u7e3d\u4e4b\uff0c\u5510\u4ee3\u5275\ufa08\u8a66\u7d93\u5243\ufa01\u5236\ufa01... [\u8a3b45]'). Therefore, the current section does not start in the beginning of the given page_text.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '\u4e8c\u3001\u50e7\u5c3c\u7c4d\u7c3f\u7684\u7ba1\uf9e4' appears in the middle of the page_text, after the header information and a substantial amount of text from the previous section. Therefore, it does not start at the beginning of the page.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '(\u4e00)\u300c\u516c\ufa01\u300d\u8207\u79c1\ufa01\u7684\u885d\u7a81' appears near the end of the page_text, following a large amount of other content such as the journal header, household records, and analysis of monk/nun registrations. Therefore, it does not start at the beginning of the page.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '\u56db\u3001\u5bfa\u9662\u7ba1\uf9e4\u5236\ufa01' appears in the middle of the page text, following a long paragraph about the selling of ordination certificates (\u5ea6\u7252) and other header information. Since there is substantial content before the section title, it does not start at the beginning of the page.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '(\u4e09)\u8a66\u7d93\u5236\ufa01\u7684\u5be6\ufa08' appears in the middle of the page text, after the header information and a substantial amount of text from a previous section. Therefore, it does not start at the beginning of the page.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The page_text starts with journal information and other text about the Southern and Northern Dynasties and Sui Dynasty. The section title '(\u4e8c)\u8cdc\u984d\u5236\ufa01\u7684\u6210\u719f' appears much later in the text, after the discussion of the Sui Dynasty. Therefore, the section does not start in the beginning of the page_text.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '\u4e09\u3001\u50e7\u5c3c\u5243\ufa01\u5236\ufa01' appears near the end of the page_text, following a significant amount of content including journal headers, household records, and analytical paragraphs. Therefore, it does not start at the beginning of the page.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '\u4e00\u3001\u50e7\u5c3c\u7ba1\uf9e4\u6a5f\u69cb\u7684\u56e0\u9769' appears in the middle of the page_text, after the journal header, author information, and an introductory paragraph. Therefore, it does not start at the beginning of the page_text.\", 'start_begin': 'no'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '(\u4e8c)\u5ea6\u7252\u7684\u5275\u884c\u53ca\u9812\u7d66\u8fa6\u6cd5' appears in the middle of the page_text, after the header information and several paragraphs of text discussing the history of public and private ordination. Therefore, it does not start at the beginning of the page.\", 'start_begin': 'no'}"
+  }
+]

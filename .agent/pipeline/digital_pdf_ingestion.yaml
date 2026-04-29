@@ -1,0 +1,262 @@
+pipeline:
+  name: citeindex_digital_pdf_ingestion
+  version: 0.2
+  description: >
+    Deterministic ingestion pipeline for born-digital academic PDFs.
+    Uses GROBID for initial metadata/reference extraction, MinerU for
+    layout analysis, and DSPy signatures with Ollama/qwen3 for
+    structured field extraction from MinerU output.
+
+  goals:
+    - avoid OCR when text layer exists
+    - preserve academic layout structure
+    - support multi-column journal formats
+    - detect and isolate footnotes
+    - deterministic reading order
+    - compatible with scanned ingestion pipeline
+    - leverage GROBID for high-precision metadata baseline
+    - use MinerU for rich layout understanding
+    - use DSPy+LLM to fill gaps from MinerU JSON/markdown
+
+  inputs:
+    pdf:
+      type: digital_pdf
+      required: true
+      description: born-digital academic PDF
+
+  outputs:
+    document_json:
+      description: structured document representation
+      format: json
+
+    merkle_index:
+      description: Merkle tree used for deterministic retrieval
+      format: json
+
+    citations:
+      description: extracted references in CSL JSON
+      format: csl_json
+
+---
+
+stages:
+
+  - stage: pdf_validation
+    purpose: >
+      Determine whether the PDF contains a text layer.
+      If not, redirect to scanned ingestion pipeline.
+
+    input:
+      pdf
+
+    output:
+      pdf_type:
+        values:
+          - digital
+          - scanned
+
+---
+
+  - stage: grobid_extraction
+    tool: grobid
+    purpose: >
+      Initial step — send raw PDF to GROBID for deterministic,
+      high-precision extraction of document metadata (title, authors,
+      date, DOI, abstract) and bibliography (cited references as CSL JSON).
+      This provides the reliable baseline before any ML processing.
+
+    input:
+      pdf
+
+    output:
+      grobid_metadata:
+        schema:
+          title
+          author
+          issued
+          DOI
+          abstract
+          container-title
+
+      grobid_references:
+        format: csl_json
+        description: cited references from back-matter bibliography
+
+---
+
+  - stage: mineru_layout_analysis
+    tool: mineru
+    purpose: >
+      Run MinerU (magic-pdf) on the raw PDF for full document layout
+      analysis. Produces middle JSON with rich block-level structure
+      and markdown with reading-order text. Replaces the old
+      pdfminer + layoutparser + column_detection + footnote_detection
+      stages with a single unified layout pass.
+
+    input:
+      pdf
+
+    output:
+      mineru_middle_json:
+        description: MinerU middle JSON with block-level layout
+        schema:
+          pdf_info:
+            - page_idx
+              para_blocks
+              preproc_blocks
+              discarded_blocks
+              layout_bboxes
+
+      mineru_markdown:
+        description: MinerU markdown output with reading-order text
+        format: markdown
+
+      mineru_content_list:
+        description: content_list.json with ordered content items
+        format: json
+
+    options:
+      parse_method: auto
+      output_format: both
+
+---
+
+  - stage: dspy_field_extraction
+    tool: dspy
+    llm: ollama/qwen3
+    purpose: >
+      Use DSPy Signatures with Ollama/qwen3 to extract structured
+      information from MinerU's JSON or markdown that GROBID may
+      have missed or gotten wrong. Reconciles GROBID metadata with
+      MinerU-derived content, handles CJK/vertical edge cases, and
+      produces the final enriched CSL JSON.
+
+    input:
+      mineru_markdown
+      mineru_middle_json
+      grobid_metadata
+      grobid_references
+
+    output:
+      enriched_csl:
+        format: csl_json
+        description: final reconciled citation metadata
+
+      extraction_provenance:
+        description: which fields came from grobid vs mineru vs dspy
+        schema:
+          field_name
+          source
+          confidence
+
+---
+
+  - stage: document_structure_builder
+    purpose: >
+      Build hierarchical document structure from MinerU layout blocks.
+      Uses MinerU's block types and reading order instead of custom
+      heuristics.
+
+    input:
+      mineru_middle_json
+      mineru_content_list
+
+    output:
+      document_structure
+
+    schema:
+      document:
+        pages:
+          - page_number
+            columns:
+              - column_id
+                paragraphs:
+                  - paragraph_id
+                    lines
+            footnotes:
+              - footnote_id
+                text
+
+---
+
+  - stage: merkle_tree_generation
+    purpose: >
+      Build deterministic Merkle-tree structure for document verification.
+
+    hash_algorithm: sha256
+
+    input:
+      document_structure
+
+    algorithm:
+      leaf_nodes:
+        - line
+        - footnote
+
+      aggregation:
+        paragraph = hash(lines)
+        column = hash(paragraphs)
+        page = hash(columns + footnotes)
+        document = hash(pages)
+
+    output:
+      merkle_tree
+
+---
+
+  - stage: retrieval_index_generation
+    purpose: >
+      Create deterministic retrieval index based on Merkle nodes.
+
+    input:
+      merkle_tree
+      document_structure
+      enriched_csl
+
+    output:
+      retrieval_index:
+        schema:
+          hash
+          page
+          column
+          paragraph
+          text_reference
+
+---
+
+storage:
+
+  file_structure:
+    root:
+      /documents/{doc_id}/
+      /documents/{doc_id}/source.pdf
+      /documents/{doc_id}/mineru_output/
+      /documents/{doc_id}/grobid_tei.xml
+      /documents/{doc_id}/structure.json
+      /documents/{doc_id}/citations.json
+      /documents/{doc_id}/merkle.json
+      /documents/{doc_id}/index.json
+
+---
+
+determinism:
+
+  guarantees:
+    - fixed parsing configuration
+    - deterministic reading order
+    - stable hash algorithm
+    - identical structure across identical inputs
+    - GROBID provides reproducible metadata baseline
+    - MinerU layout detection with fixed parameters
+
+---
+
+cli_interface:
+
+  command: citeindex ingest-digital
+  arguments:
+    - input_pdf
+    - output_directory
+
+  example: |
+    citeindex ingest-digital article.pdf --out ./index/

@@ -1,0 +1,13 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: inverted-index-builder
+purpose: Build deterministic token-to-node postings.
+inputs:
+  - nodes
+outputs:
+  - inverted_index
+rules:
+  - fixed_tokenizer_version
+  - postings_sorted_by_node_id
+forbidden:
+  - embedding_generation

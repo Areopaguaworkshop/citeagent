@@ -1,0 +1,139 @@
+pipeline:
+  name: citeindex_url_article_ingestion
+  version: 1.0
+  description: >
+    Ingest web articles into CiteIndex by extracting structured content,
+    generating CSL JSON metadata, and building a deterministic Merkle tree.
+
+inputs:
+  type: url
+  accepted_schemes:
+    - http
+    - https
+
+steps:
+  - id: fetch_url
+    tool: playwright
+    description: >
+      Fetch webpage and render JavaScript if necessary.
+    outputs:
+      - html
+      - final_url
+
+  - id: extract_main_content
+    tool: trafilatura
+    inputs:
+      - html
+    description: >
+      Extract main article content while removing boilerplate navigation,
+      advertisements, and unrelated page elements.
+    outputs:
+      - extracted_text
+      - metadata
+
+  - id: fallback_extraction
+    condition: extracted_text == null
+    tool: readability-lxml
+    inputs:
+      - html
+    outputs:
+      - extracted_text
+
+  - id: detect_document_structure
+    tool: internal
+    description: >
+      Detect sections, headings, paragraphs, lists, and footnotes from HTML.
+    outputs:
+      - structured_document
+
+  - id: normalize_text
+    tool: internal
+    description: >
+      Clean whitespace, normalize unicode, and standardize paragraph structure.
+    outputs:
+      - normalized_document
+
+  - id: extract_metadata
+    tool: zotero-translator
+    description: >
+      Extract bibliographic metadata from page metadata (schema.org,
+      OpenGraph, Dublin Core).
+    outputs:
+      - title
+      - authors
+      - publication_date
+      - container_title
+      - language
+
+  - id: generate_csl_json
+    tool: internal
+    description: >
+      Generate CSL JSON citation metadata for the webpage.
+    template:
+      type: webpage
+      required_fields:
+        - title
+        - URL
+        - accessed
+    outputs:
+      - csl_item
+
+  - id: deterministic_chunking
+    tool: internal
+    description: >
+      Split document into deterministic hierarchical nodes:
+      section → paragraph → sentence.
+    outputs:
+      - chunks
+
+  - id: compute_hashes
+    tool: internal
+    algorithm: sha256
+    description: >
+      Compute hashes for each chunk to prepare Merkle tree nodes.
+    outputs:
+      - chunk_hashes
+
+  - id: build_merkle_tree
+    tool: internal
+    description: >
+      Build Merkle tree from chunk hashes to ensure deterministic retrieval.
+    outputs:
+      - merkle_root
+      - merkle_tree
+
+  - id: generate_document_json
+    tool: internal
+    description: >
+      Combine structured document with chunk hashes and metadata.
+    outputs:
+      - document_json
+
+  - id: attach_citeindex_extension
+    tool: internal
+    description: >
+      Add CiteIndex-specific extension fields to CSL metadata.
+    extension_fields:
+      - content_hash
+      - merkle_root
+      - ingestion_timestamp
+      - source_type
+    outputs:
+      - enhanced_csl_json
+
+  - id: store_artifacts
+    tool: filesystem
+    description: >
+      Store citation metadata and structured document in CiteIndex corpus.
+    layout: corpus/
+      {document_hash}/
+      metadata.json
+      csl.json
+      document.json
+      merkle.json
+
+outputs:
+  - enhanced_csl_json
+  - document_json
+  - merkle_tree
+  - merkle_root

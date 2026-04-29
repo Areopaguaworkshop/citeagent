@@ -1,0 +1,12 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: clarification_output
+type: object
+required: [schema_version, query_id, needs_user_input]
+properties:
+  schema_version: {type: string}
+  query_id: {type: string}
+  needs_user_input: {type: boolean}
+  questions: {type: array}
+  constraint_updates: {type: object}
+  resolved_plan: {type: object}

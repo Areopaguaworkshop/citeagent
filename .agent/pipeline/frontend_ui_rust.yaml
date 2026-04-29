@@ -1,0 +1,166 @@
+# citeindex_rust_tui_frontend_pipeline.yaml
+
+pipeline:
+  name: CiteIndex Rust TUI Frontend
+  description: >
+    Terminal UI for academic assistant implemented using Rust TUI libraries.
+    Features chat mode, ingestion, search, plugin commands, collapsible side panel, light/dark themes.
+
+libraries:
+  tui: ratatui # core TUI framework
+  terminal_io: crossterm
+  async_runtime: tokio
+  fuzzy_finder: skim
+  markdown_renderer: pulldown-cmark
+
+components:
+  - id: app_core
+    type: Application
+    description: >
+      Main Rust TUI application managing layout, theme, mode, and async tasks.
+    properties:
+      default_mode: chat
+      themes:
+        light: true
+        dark: true
+      keybindings:
+        enter: submit_input
+        shift+enter: newline
+        tab: autocomplete
+        ctrl+i: trigger_ingest
+        ctrl+s: trigger_search
+        ctrl+p: trigger_plugins
+        ctrl+t: toggle_theme
+        ctrl+f: search_history
+        ctrl+r: redo_command
+
+  - id: layout_main
+    type: Layout
+    description: >
+      Main terminal layout with top bar, scrollable chat window, input bar, and collapsible side panel.
+    sections:
+      - name: top_bar
+        type: Bar
+        properties:
+          height: 1
+          collapsible: false
+          content: "Mode | Theme | Shortcuts"
+      - name: chat_window
+        type: ScrollablePanel
+        properties:
+          scrollable: true
+          focusable: true
+          markdown_support: true
+          render_citations: true
+          render_footnotes: true
+          render_tables: true
+          render_code_blocks: true
+      - name: input_bar
+        type: Input
+        properties:
+          multiline: true
+          expandable: true
+          default_prompt: "Type your message or '/' for commands..."
+          autocomplete_enabled: true
+      - name: side_panel
+        type: Panel
+        properties:
+          collapsible: true
+          default_collapsed: true
+          width_percentage: 30
+          content_sections:
+            - recent_documents
+            - search_results
+            - plugin_shortcuts
+
+  - id: mode_manager
+    type: ModeManager
+    description: >
+      Handles multiple operational modes triggered by '/' commands.
+    modes:
+      chat:
+        default: true
+        description: AI chat assistant mode
+      ingest:
+        trigger: /ingest
+        description: Ingest PDFs, media, or CSL JSON documents
+      search:
+        trigger: /search
+        description: Search indexed documents or references
+      plugin:
+        trigger: /plugin
+        description: Invoke internal/external plugin tools
+      refs:
+        trigger: /refs
+        description: Reference manager
+      project:
+        trigger: /proj
+        description: Project explorer
+
+  - id: command_autocomplete
+    type: Autocomplete
+    description: >
+      Provides suggestions when '/' is typed.
+    sources:
+      - ingest
+      - search
+      - plugin
+      - refs
+      - project
+    properties:
+      fuzzy_matching: true
+      inline_preview: true
+      keyboard_navigation: true
+
+  - id: chat_renderer
+    type: Renderer
+    description: >
+      Renders AI responses in an academic-friendly format.
+    properties:
+      markdown_support: true
+      citation_format: "[Author, Year]"
+      footnote_superscript: true
+      tables: true
+      code_blocks: true
+      response_tags: [Summary, Citation Suggestion, Methodology]
+
+  - id: theme_manager
+    type: Theme
+    description: Manages light/dark themes across the TUI.
+    properties:
+      toggle_key: ctrl+t
+      affects: [top_bar, chat_window, input_bar, side_panel]
+      default: dark
+
+  - id: document_tracker
+    type: Tracker
+    description: Tracks ingested documents, metadata, sections, CSL JSON items.
+    properties:
+      multi_column_support: true
+      footnote_support: true
+      searchable: true
+      index_by_section: true
+
+  - id: plugin_manager
+    type: Plugin
+    description: >
+      Handles optional plugin tools.
+    properties:
+      available_plugins:
+        - summarize
+        - video_caption
+        - citation_formatter
+        - pdf_metadata_extractor
+
+  - id: input_parser
+    type: Parser
+    description: Determines whether input is chat or command.
+    properties:
+      command_prefix: "/"
+      routing:
+        ingest: ingest_handler
+        search: search_handler
+        plugin: plugin_handler
+        refs: refs_handler
+        project: project_handler
+        default: chat_handler

@@ -1,0 +1,9 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: generation_output
+type: object
+required: [schema_version, answer_machine, answer_human]
+properties:
+  schema_version: {type: string}
+  answer_machine: {type: object}
+  answer_human: {type: string}

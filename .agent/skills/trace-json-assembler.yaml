@@ -1,0 +1,17 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: trace-json-assembler
+purpose: Assemble machine answer with complete evidence trace.
+inputs:
+  - answer_draft
+  - evidence_nodes
+  - csl_registry
+  - merkle_data
+outputs:
+  - answer_machine_json
+rules:
+  - include_document_merkle_root
+  - include_per_evidence_merkle_proof
+  - include_node_id_and_sha256
+forbidden:
+  - claim_without_evidence_mapping

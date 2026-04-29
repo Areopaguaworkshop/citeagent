@@ -1,0 +1,39 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Plugin: CiteAgent academic harness (no MCP needed — plugin spawns Python backend itself)
+  "plugin": ["@areopaguaworkshop/citeagent"],
+  // Model: Ollama DeepSeek V4 Flash
+  "model": "ollama/deepseek-v4-flash:cloud",
+  // Agents: academic domain specialists
+  "default_agent": "researcher",
+  "agent": {
+    "researcher": {
+      "mode": "primary",
+      "model": "ollama/deepseek-v4-flash:cloud",
+      "description": "Academic research agent for citation analysis, literature review, and knowledge retrieval",
+    },
+    "verifier": {
+      "mode": "subagent",
+      "model": "ollama/deepseek-v4-flash:cloud",
+      "description": "Hidden verification subagent that validates evidence chains",
+    },
+  },
+  // Ollama provider (local)
+  "provider": {
+    "ollama": {
+      "api": "http://localhost:11434/v1",
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (Local)",
+      "models": {
+        "deepseek-v4-flash:cloud": {
+          "name": "DeepSeek V4 Flash",
+          "family": "deepseek",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "limit": { "context": 131072, "output": 8192 },
+        },
+      },
+    },
+  },
+}

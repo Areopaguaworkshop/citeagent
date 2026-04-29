@@ -1,0 +1,6 @@
+src/
+bin/
+node_modules/
+bun.lock
+tsconfig.json
+.gitignore

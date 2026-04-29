@@ -1,0 +1,28 @@
+[project]
+name = "cli-anything-citeindex"
+version = "1.0.0"
+description = "CLI harness for CiteIndex — AI research knowledge infrastructure with Merkle-verified retrieval"
+authors = [{ name = "ajia", email = "yyjfwoaini@gmail.com" }]
+dependencies = [
+    "click>=8.0.0",
+    "prompt-toolkit>=3.0.0",
+]
+readme = "cli_anything/citeindex/README.md"
+requires-python = ">= 3.12"
+
+[project.scripts]
+cli-anything-citeindex = "cli_anything.citeindex.citeindex_cli:main"
+
+[build-system]
+requires = ["hatchling==1.26.3"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cli_anything/citeindex"]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+# Ensure editable installs add project root to sys.path (not cli_anything/)
+# This is required for PEP 420 namespace package resolution
+
+[tool.hatch.build.targets.editable]
+packages = ["cli_anything/citeindex"]

@@ -1,0 +1,14 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: clarification-handler
+purpose: Ask minimal clarification questions and normalize answers.
+inputs:
+  - query_plan
+  - dialog_state
+outputs:
+  - resolved_plan
+rules:
+  - max_three_questions
+  - ask_only_blocking_questions
+forbidden:
+  - infer_user_answer_without_input

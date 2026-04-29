@@ -1,0 +1,16 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: query_plan_output
+type: object
+required: [schema_version, query_id, retrieval_policy, clarification_required]
+properties:
+  schema_version: {type: string}
+  query_id: {type: string}
+  retrieval_policy: {type: string}
+  must_filters: {type: array}
+  should_filters: {type: array}
+  search_terms: {type: array}
+  exact_phrases: {type: array}
+  section_targets: {type: array}
+  clarification_required: {type: boolean}
+  clarification_questions: {type: array}

@@ -1,0 +1,30 @@
+{
+  "type": "article-journal",
+  "author": [
+    {
+      "family": "HEUER",
+      "given": "Johannes DEN"
+    },
+    {
+      "family": "SCHMIDT",
+      "given": "Andrea"
+    },
+    {
+      "family": "PATARIDZE",
+      "given": "Tamara"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        2014
+      ]
+    ]
+  },
+  "title": "Scripts Beyond Borders A Survey of Allographic Traditions in the Euro-Mediterranean World",
+  "container-title": "PUBLICATIONS DE L’INSTITUT ORIENTALISTE DE LOUVAIN",
+  "volume": "62",
+  "page": "329-?",
+  "ISBN": "978-90-429-2646-2; 978-2-7584-OI59-9",
+  "id": "heuer-2014-scripts"
+}

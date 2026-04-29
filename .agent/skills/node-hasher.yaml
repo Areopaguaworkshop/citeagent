@@ -1,0 +1,13 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: node-hasher
+purpose: Compute node sha256 and deterministic node IDs.
+inputs:
+  - node_units
+outputs:
+  - hashed_nodes
+rules:
+  - sha256_over_canonical_text
+  - node_id_pattern_source_section_unit_hash8
+forbidden:
+  - non_deterministic_ids

@@ -1,0 +1,9 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+schema_version: 1.0.0
+title: query_planner_input
+type: object
+required: [schema_version, query_text]
+properties:
+  schema_version: {type: string}
+  query_text: {type: string}
+  session_context: {type: object}

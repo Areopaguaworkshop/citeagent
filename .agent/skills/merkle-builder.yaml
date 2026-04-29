@@ -1,0 +1,15 @@
+version: 1.0.0
+schema_version: 1.0.0
+skill_id: merkle-builder
+purpose: Build and verify section/document Merkle trees.
+inputs:
+  - hashed_nodes
+  - section_tree
+outputs:
+  - merkle_tree
+  - document_merkle_root
+rules:
+  - stable_child_ordering
+  - proof_mode_full_or_compact
+forbidden:
+  - root_without_proof_paths

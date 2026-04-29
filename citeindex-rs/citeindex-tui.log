@@ -1,0 +1,9 @@
+[2m2026-04-11T16:03:55.609304Z[0m [32m INFO[0m [2mciteindex_core::config[0m[2m:[0m Loaded config from "config.toml"
+[2m2026-04-11T16:03:55.634173Z[0m [32m INFO[0m [2mciteindex_kernel::indexes[0m[2m:[0m Registering placeholder tokenizers for zh/ja (English-based); jieba/lindera not yet integrated
+[2m2026-04-11T16:03:55.635216Z[0m [32m INFO[0m [2mciteindex_kernel::indexes[0m[2m:[0m Registering placeholder tokenizers for zh/ja (English-based); jieba/lindera not yet integrated
+[2m2026-04-11T16:03:55.636195Z[0m [32m INFO[0m [2mciteindex_kernel::indexes[0m[2m:[0m Registering placeholder tokenizers for zh/ja (English-based); jieba/lindera not yet integrated
+[2m2026-04-11T16:04:02.340806Z[0m [32m INFO[0m [2mciteindex_kernel::agent_runtime[0m[2m:[0m agent initialized successfully [3magent[0m[2m=[0mCoordinatorAgent
+[2m2026-04-11T16:04:02.361297Z[0m [33m WARN[0m [2mciteindex_core::ipc[0m[2m:[0m agent request failed, retrying after restart: agent CoordinatorAgent returned invalid output hash for task f8748061-421a-4991-a47d-b88d468e88fc [3magent[0m[2m=[0mCoordinatorAgent
+[2m2026-04-11T16:04:02.361590Z[0m [32m INFO[0m [2mciteindex_kernel::agent_runtime[0m[2m:[0m graceful shutdown acknowledged [3magent[0m[2m=[0mCoordinatorAgent
+[2m2026-04-11T16:04:02.402061Z[0m [32m INFO[0m [2mciteindex_kernel::agent_runtime[0m[2m:[0m agent initialized successfully [3magent[0m[2m=[0mCoordinatorAgent
+[2m2026-04-11T16:04:30.144654Z[0m [32m INFO[0m [2mciteindex_kernel::agent_runtime[0m[2m:[0m graceful shutdown acknowledged [3magent[0m[2m=[0mCoordinatorAgent
