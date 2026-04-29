@@ -32,11 +32,13 @@ export class CiteAgentBridge {
 
   /**
    * Auto-detect a Python interpreter that can import citeindex.
-   * Priority: CITEAGENT_PYTHON env → project .venv → rye → uv → system python3.
+   * Priority: CITEAGENT_PYTHON env → project .venv → uv tool → rye → system python3.
    */
   static findPython(projectDir: string): string {
     const candidates = [
       path.join(projectDir, ".venv", "bin", "python3"),
+      path.join(os.homedir(), ".local", "share", "uv", "tools", "citeindex", "bin", "python"),
+      path.join(os.homedir(), ".local", "share", "uv", "tools", "citeindex", "bin", "python3"),
       path.join(os.homedir(), ".rye", "py", "cpython@3.12.8", "bin", "python3.12"),
       path.join(os.homedir(), ".local", "share", "uv", "python", "bin", "python3"),
       "python3",
@@ -52,7 +54,44 @@ export class CiteAgentBridge {
         continue
       }
     }
-    // Last resort — will produce a clear error at connect() time
+    // If no python found but citeindex CLI exists, try to resolve its python
+    // (uv tool install creates a wrapper script that points at a venv)
+    try {
+      const citeindexPath = execSync("which citeindex", { stdio: "pipe", timeout: 3000 })
+        .toString()
+        .trim()
+      if (citeindexPath) {
+        // The citeindex binary is a shim; we can try to find the real python from its shebang
+        const shebang = execSync(`head -1 "${citeindexPath}"`, { stdio: "pipe" })
+          .toString()
+          .trim()
+        if (shebang.startsWith("#!/")) {
+          const binPath = shebang.slice(2).replace(/\s.*/, "")
+          try {
+            // Verify this python can import citeindex
+            execSync(`${path.dirname(binPath)}/python3 -c "import citeindex"`, {
+              stdio: "pipe",
+              timeout: 5000,
+            })
+            return `${path.dirname(binPath)}/python3`
+          } catch {
+            // shebang wasn't the python — skip
+          }
+        }
+        // Fallback: citeindex is on PATH and works, use system python3
+        // (uv tool creates a wrapper; the real import might need uv run)
+        try {
+          execSync("python3 -c \"import citeindex\"", { stdio: "pipe", timeout: 5000 })
+        } catch {
+          // python3 can't import citeindex but citeindex binary exists
+          // This likely means citeindex is in a PATH dir but python3 is system
+          // Warn will be shown at connect time
+        }
+      }
+    } catch {
+      // citeindex not on PATH either
+    }
+    // Last resort
     return "python3"
   }
 

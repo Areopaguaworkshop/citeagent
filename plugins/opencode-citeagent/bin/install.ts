@@ -54,12 +54,35 @@ function checkPrerequisites(): boolean {
     ok = false
   }
 
-  // Check citeindex module
+  // Check citeindex module (supports pip, uv tool, and venv installs)
+  let citeindexFound = false
   try {
+    // Try system python first (pip install or venv)
     execSync('python3 -c "import citeindex"', { stdio: "pipe", timeout: 10000 })
-    console.log("✅ Python citeindex package found")
+    console.log("✅ Python citeindex package found (system python)")
+    citeindexFound = true
   } catch {
-    console.error("❌ citeindex not importable. Install with: pip install citeindex")
+    // Try uv tool install (citeindex CLI on PATH)
+    try {
+      execSync("citeindex --version", { stdio: "pipe", timeout: 10000 })
+      console.log("✅ Python citeindex package found (uv tool install)")
+      citeindexFound = true
+    } catch {
+      // Try project .venv
+      try {
+        const venvPython = path.join(process.cwd(), ".venv", "bin", "python3")
+        execSync(`"${venvPython}" -c "import citeindex"`, { stdio: "pipe", timeout: 10000 })
+        console.log("✅ Python citeindex package found (project .venv)")
+        citeindexFound = true
+      } catch {
+        // fallof
+      }
+    }
+  }
+  if (!citeindexFound) {
+    console.error("❌ citeindex not found. Install with one of:")
+    console.error("     uv tool install citeindex   (recommended, global CLI)")
+    console.error("     pip install citeindex       (into active venv)")
     ok = false
   }
 
