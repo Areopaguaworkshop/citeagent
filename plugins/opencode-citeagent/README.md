@@ -1,11 +1,11 @@
-# @areopaguaworkshop/citeagent
+# @ephremyuan/citeagent
 
 OpenCode plugin for CiteAgent — AI research knowledge infrastructure with Merkle-verified retrieval, citation-indexed search, and trace-bound chat.
 
 ## Install
 
 ```bash
-bunx @areopaguaworkshop/citeagent@latest install
+bunx @ephremyuan/citeagent@latest install
 ```
 
 The installer automatically:
@@ -37,7 +37,7 @@ sudo apt install tesseract-ocr
 
 ## Uninstall
 
-1. Remove `"@areopaguaworkshop/citeagent"` from `~/.config/opencode/opencode.jsonc` `plugin` array
+1. Remove `"@ephremyuan/citeagent"` from `~/.config/opencode/opencode.jsonc` `plugin` array
 2. Remove config: `rm ~/.config/opencode/citeagent.json`
 3. Remove assets: `rm ~/.config/opencode/skills/citeagent-*.md ~/.config/opencode/agents/citeagent-*.md ~/.config/opencode/rules/citeagent-*.md`
 

@@ -3,9 +3,9 @@
  * CiteAgent OpenCode Plugin — Installer
  *
  * Usage:
- *   bunx @areopaguaworkshop/citeagent@latest install
- *   bunx @areopaguaworkshop/citeagent@latest install --reset
- *   bunx @areopaguaworkshop/citeagent@latest install --dry-run
+ *   bunx @ephremyuan/citeagent@latest install
+ *   bunx @ephremyuan/citeagent@latest install --reset
+ *   bunx @ephremyuan/citeagent@latest install --dry-run
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, cpSync, readdirSync } from "fs"
@@ -16,7 +16,7 @@ import { execSync } from "child_process"
 // ── Config ──────────────────────────────────────────────────────────────────
 
 const OPENCODE_DIR = join(homedir(), ".config", "opencode")
-const PLUGIN_NAME = "@areopaguaworkshop/citeagent"
+const PLUGIN_NAME = "@ephremyuan/citeagent"
 const CONFIG_FILENAME = "citeagent.json"
 const ASSET_PREFIX = "citeagent-"
 
@@ -28,7 +28,7 @@ const reset = args.includes("--reset")
 const command = args.find((a) => !a.startsWith("--"))
 
 if (command !== "install") {
-  console.log("Usage: bunx @areopaguaworkshop/citeagent@latest install [--reset] [--dry-run]")
+  console.log("Usage: bunx @ephremyuan/citeagent@latest install [--reset] [--dry-run]")
   process.exit(1)
 }
 

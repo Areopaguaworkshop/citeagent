@@ -23,6 +23,7 @@
   <img src="https://img.shields.io/badge/rust-1.75+-orange.svg" alt="Rust 1.75+">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT">
   <img src="https://img.shields.io/pypi/v/cite-extractor.svg" alt="PyPI version">
+  <img src="https://img.shields.io/npm/v/@ephremyuan/citeagent.svg" alt="npm version">
 </p>
 
 ---
@@ -87,8 +88,19 @@ Query → BM25 Retrieval → Ranked Evidence → Generation (LLM or extractive)
 ### Installation
 
 ```bash
+# Python CLI (core engine)
 pip install cite-extractor
+
+# OpenCode plugin (AI agent integration)
+bunx @ephremyuan/citeagent@latest install
 ```
+
+The OpenCode plugin installer automatically:
+- Adds the plugin to `~/.config/opencode/opencode.jsonc`
+- Deploys skills, agent configs, and rules to `~/.config/opencode/`
+- Generates agent model mappings in `~/.config/opencode/citeagent.json`
+
+> **See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.md)** for full plugin details — agents, tools, architecture, and uninstall steps.
 
 ### System Dependencies
 
@@ -208,12 +220,29 @@ For new work, use normal ingest commands or the TUI `/ingest` mode. Do not add n
 
 ---
 
+## OpenCode Plugin
+
+CiteAgent ships as an **OpenCode plugin** (`@ephremyuan/citeagent` on npm) that brings the research engine into your AI coding workflow:
+
+- **5 specialized agents** — researcher, verifier, explore-corpus, ingestor, reviewer
+- **25+ MCP tools** — `cite_search`, `cite_verify`, `cite_ingest`, `cite_render`, `cite_tree`, `cite_memory_*`, and more
+- **Skill & rule assets** auto-deployed on install
+
+```bash
+bunx @ephremyuan/citeagent@latest install
+```
+
+See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.md) for full details.
+
+---
+
 ## Architecture
 
-CiteIndex is a **hybrid Rust + Python** system:
+CiteIndex is a **hybrid Rust + Python** system with an **OpenCode plugin** layer:
 
 | Layer | Language | Role |
 |-------|----------|------|
+| **OpenCode Plugin** | TypeScript (npm) | MCP bridge, skill/rule deployment, agent configs |
 | **TUI & Orchestrator** | Rust | Terminal UI (ratatui), runtime bridge, storage preparation, memory view, Python NDJSON IPC |
 | **AI Engine** | Python | Agent adapters, ingestion pipelines, chat/search logic, OCR/document parsing |
 | **Storage** | Files + indexes | Persistent v12 store under `corpus/.citeindex/`, with legacy `corpus/` compatibility import |

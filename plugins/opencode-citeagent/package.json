@@ -1,5 +1,5 @@
 {
-  "name": "@areopaguaworkshop/citeagent",
+  "name": "@ephremyuan/citeagent",
   "version": "0.3.0",
   "type": "module",
   "main": "dist/index.js",
