@@ -117,7 +117,7 @@ export class CiteAgentBridge {
 
     this.client = new Client({
       name: "opencode-citeagent",
-      version: "0.2.0",
+      version: "0.3.2",
     })
 
     try {
