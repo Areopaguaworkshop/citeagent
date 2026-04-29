@@ -56,26 +56,28 @@ function checkPrerequisites(): boolean {
 
   // Check citeindex module (supports pip, uv tool, and venv installs)
   let citeindexFound = false
+  // Try citeindex CLI on PATH first (covers `uv tool install` and any pip install
+  // that exposes the console script). The CLI doesn't support --version, so we
+  // use `command -v` which only checks for presence on PATH.
   try {
-    // Try system python first (pip install or venv)
-    execSync('python3 -c "import citeindex"', { stdio: "pipe", timeout: 10000 })
-    console.log("✅ Python citeindex package found (system python)")
+    execSync("command -v citeindex", { stdio: "pipe", timeout: 10000, shell: "/bin/sh" })
+    console.log("✅ Python citeindex package found (CLI on PATH)")
     citeindexFound = true
   } catch {
-    // Try uv tool install (citeindex CLI on PATH)
+    // Try system python import (pip install into active env)
     try {
-      execSync("citeindex --version", { stdio: "pipe", timeout: 10000 })
-      console.log("✅ Python citeindex package found (uv tool install)")
+      execSync('python3 -c "import citeindex"', { stdio: "pipe", timeout: 10000 })
+      console.log("✅ Python citeindex package found (system python)")
       citeindexFound = true
     } catch {
       // Try project .venv
       try {
-        const venvPython = path.join(process.cwd(), ".venv", "bin", "python3")
+        const venvPython = join(process.cwd(), ".venv", "bin", "python3")
         execSync(`"${venvPython}" -c "import citeindex"`, { stdio: "pipe", timeout: 10000 })
         console.log("✅ Python citeindex package found (project .venv)")
         citeindexFound = true
       } catch {
-        // fallof
+        // not found
       }
     }
   }
@@ -113,14 +115,68 @@ function addPluginToConfig(): void {
   let content = ""
   if (existsSync(configPath)) {
     content = readFileSync(configPath, "utf-8")
-    // Strip comments for JSON parsing (simple // comment removal)
-    const jsonStr = content
-      .split("\n")
-      .map((line) => line.replace(/\/\/.*$/, ""))
-      .join("\n")
+
+    // Strip JSONC comments while respecting strings, so that "//" inside a
+    // string literal (e.g. "https://...") is not mistaken for a line comment.
+    const stripJsonc = (src: string): string => {
+      let out = ""
+      let i = 0
+      let inString = false
+      let stringQuote = ""
+      while (i < src.length) {
+        const ch = src[i]
+        const next = src[i + 1]
+        if (inString) {
+          out += ch
+          if (ch === "\\" && i + 1 < src.length) {
+            out += src[i + 1]
+            i += 2
+            continue
+          }
+          if (ch === stringQuote) {
+            inString = false
+          }
+          i += 1
+          continue
+        }
+        if (ch === '"' || ch === "'") {
+          inString = true
+          stringQuote = ch
+          out += ch
+          i += 1
+          continue
+        }
+        if (ch === "/" && next === "/") {
+          while (i < src.length && src[i] !== "\n") i += 1
+          continue
+        }
+        if (ch === "/" && next === "*") {
+          i += 2
+          while (i < src.length && !(src[i] === "*" && src[i + 1] === "/")) i += 1
+          i += 2
+          continue
+        }
+        out += ch
+        i += 1
+      }
+      return out
+    }
+
+    // Try strict JSON first; fall back to JSONC stripping.
+    let parsed: any
+    try {
+      parsed = JSON.parse(content)
+    } catch {
+      try {
+        parsed = JSON.parse(stripJsonc(content))
+      } catch {
+        console.warn(`⚠️  Could not parse ${configPath}. Add "${PLUGIN_NAME}" to the "plugin" array manually.`)
+        return
+      }
+    }
 
     try {
-      const config = JSON.parse(jsonStr)
+      const config = parsed
       const plugins = (config.plugin ?? []) as string[]
       if (plugins.includes(PLUGIN_NAME)) {
         console.log(`ℹ️  Plugin "${PLUGIN_NAME}" already in ${configPath}`)
@@ -154,7 +210,12 @@ function addPluginToConfig(): void {
 
 function deployAssets(subdir: string, label: string): void {
   const globalDir = join(OPENCODE_DIR, subdir)
-  const assetDir = join(import.meta.dir, "..", "assets", subdir)
+  // When built, this file lives at dist/bin/install.js, so assets/ is two levels up.
+  // When run directly from bin/install.ts, it's one level up. Try both.
+  let assetDir = join(import.meta.dir, "..", "..", "assets", subdir)
+  if (!existsSync(assetDir)) {
+    assetDir = join(import.meta.dir, "..", "assets", subdir)
+  }
 
   if (!existsSync(assetDir)) {
     console.warn(`⚠️  No bundled assets found at ${assetDir}`)
