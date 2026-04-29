@@ -45,13 +45,13 @@ Once connected, you get **25+ tools** for Merkle-verified academic research:
 Before adding the MCP server, install the Python package:
 
 ```bash
-pip install citeindex
+uv tool install citeindex
 ```
 
 Verify it works:
 
 ```bash
-python3 -c "import citeindex; print('OK')"
+citeindex --version
 ```
 
 System dependencies (optional but recommended):
@@ -253,7 +253,7 @@ Priority: `CITEAGENT_PYTHON` env → project `.venv/bin/python3` → `~/.rye/py/
 | Problem | Cause | Fix |
 |---------|-------|-----|
 | `Connection error (-32000)` | Python process crashed or `citeindex` not installed | Run `python3 -c "import citeindex"` to verify |
-| `No module named citeindex.mcp_server` | Old version of citeindex | `pip install -U citeindex` |
+| `No module named citeindex.mcp_server` | Old version of citeindex | `uv tool upgrade citeindex` |
 | `tesseract not found` | OCR not installed | `sudo apt install tesseract-ocr` or `brew install tesseract` |
 | Tools don't appear | MCP server not started or config path wrong | Restart the tool; check config file path |
 | `CITEAGENT_CORPUS_ROOT` errors | Corpus directory doesn't exist | Create it: `mkdir -p corpus` |

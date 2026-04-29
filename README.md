@@ -84,7 +84,7 @@ Query → BM25 Retrieval → Ranked Evidence → Generation (LLM or extractive)
 
 ```bash
 # Python engine + CLI (required for all usage)
-pip install citeindex
+uv tool install citeindex
 
 # OpenCode plugin (AI agent integration)
 bunx @ephremyuan/citeagent@latest install
@@ -316,7 +316,7 @@ If you use CiteAgent in academic work, please cite:
   title = {CiteAgent: AI Research Agent with Merkle-Verified Retrieval and Citation-Indexed Search},
   year = {2025},
   url = {https://github.com/Areopaguaworkshop/citeagent},
-  note = {Python package: citeindex v0.11.0, npm package: @ephremyuan/citeagent v0.3.0}
+  note = {Python package: citeindex v0.11.0, npm package: @ephremyuan/citeagent v0.3.1}
 }
 ```
 

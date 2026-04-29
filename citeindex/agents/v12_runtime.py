@@ -1,7 +1,7 @@
 """Thin v12 agent adapter runtime.
 
-These adapters provide the Python entrypoints expected by the Rust v12
-manifests. They intentionally keep behavior small and deterministic for now,
+These adapters provide the Python entrypoints for the v12 manifest system.
+They intentionally keep behavior small and deterministic for now,
 wrapping the existing Python pipeline where practical.
 """
 

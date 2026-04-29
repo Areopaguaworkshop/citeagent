@@ -17,14 +17,6 @@ corpus/**/*
 # instruction
 instruction/**/*
 docs/**/*
-# Rust
-target/
-Cargo.lock
-*.rs.bk
-*.pdb
-rust-tools.json
-rustfmt.toml
-.daplint
 .vscode/
 .idea/
 *.swp

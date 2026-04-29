@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
-CiteIndex MCP Server — exposes CiteIndex kernel functionality via the
+CiteAgent MCP Server — exposes CiteAgent engine functionality via the
 Model Context Protocol (stdio transport).
 
 Server name : citeagent-kernel
-Version     : 0.12.0
+Version     : 0.3.1
 
-Each tool is an async shim that delegates to the real CiteIndex Python
-functions.  Tools that require the Rust kernel (tantivy_search, etc.)
-remain as stubs until the kernel is connected.
+Each tool is an async shim that delegates to the real CiteAgent Python
+functions.
 """
 
 from __future__ import annotations
@@ -34,12 +33,12 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 SERVER_NAME = "citeagent-kernel"
-SERVER_VERSION = "0.12.0"
+SERVER_VERSION = "0.3.1"
 
 server = Server(SERVER_NAME, version=SERVER_VERSION)
 
-STUB_NOTE = "stub implementation — connect Rust kernel for full functionality"
-RUST_KERNEL_NOTE = "Requires Rust kernel — not yet connected"
+STUB_NOTE = "stub implementation — not yet fully implemented"
+PLACEHOLDER_NOTE = "Not yet implemented"
 
 
 def _import_direct(module_path: str, package_root: str | None = None):
@@ -925,7 +924,7 @@ async def _handle_delete_document(args: dict[str, Any]) -> dict[str, Any]:
     return {
         "source_id": source_id,
         "status": "deleted",
-        "note": RUST_KERNEL_NOTE,
+        "note": PLACEHOLDER_NOTE,
     }
 
 
@@ -1061,7 +1060,7 @@ async def _handle_ag_write_edge(args: dict[str, Any]) -> dict[str, Any]:
         "edge_type": args.get("edge_type", ""),
         "weight": args.get("weight", 1.0),
         "status": "written",
-        "note": RUST_KERNEL_NOTE,
+        "note": PLACEHOLDER_NOTE,
     }
 
 
@@ -1310,7 +1309,7 @@ async def _handle_regex_search(args: dict[str, Any]) -> dict[str, Any]:
         }
         for i in range(min(limit, 3))
     ]
-    return {"results": results, "total": len(results), "note": RUST_KERNEL_NOTE}
+    return {"results": results, "total": len(results), "note": PLACEHOLDER_NOTE}
 
 
 async def _handle_memory_save(args: dict[str, Any]) -> dict[str, Any]:
@@ -1356,7 +1355,7 @@ async def _handle_memory_save(args: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _handle_tantivy_search(args: dict[str, Any]) -> dict[str, Any]:
-    """Requires Rust kernel for Tantivy search."""
+    """Tantivy full-text search (placeholder implementation)."""
     query: str = args.get("query", "")
     limit: int = args.get("limit", 10)
     results = [
@@ -1367,16 +1366,16 @@ async def _handle_tantivy_search(args: dict[str, Any]) -> dict[str, Any]:
         }
         for i in range(min(limit, 3))
     ]
-    return {"results": results, "total": len(results), "note": RUST_KERNEL_NOTE}
+    return {"results": results, "total": len(results), "note": PLACEHOLDER_NOTE}
 
 
 async def _handle_tantivy_index(args: dict[str, Any]) -> dict[str, Any]:
-    """Requires Rust kernel for Tantivy indexing."""
+    """Tantivy index creation (placeholder implementation)."""
     path: str = args.get("path", "")
     return {
         "doc_id": f"tantivy-stub-{_sha256_hex(path)[:12]}",
         "status": "indexed",
-        "note": RUST_KERNEL_NOTE,
+        "note": PLACEHOLDER_NOTE,
     }
 
 
