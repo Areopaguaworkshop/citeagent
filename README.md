@@ -99,24 +99,24 @@ bunx @ephremyuan/citeagent@latest install
 
 ### Use with Claude Code, Codex, Cursor, and other MCP clients
 
-CiteAgent's Python backend (`citeindex.mcp_server`) is a **standard MCP server** that works with any MCP-compatible tool — not just OpenCode. Add it to your preferred client:
+CiteAgent's Python backend (`citeindex.mcp_server`) is a **standard MCP server** that works with any MCP-compatible tool — not just OpenCode.
 
-**Claude Code** (project-scoped `.mcp.json` at repo root):
+> **Full setup guide for all tools:** [docs/mcp-setup.md](./docs/mcp-setup.md)
+
+Quick configs:
+
+**Claude Code** (`.mcp.json` at repo root, or `claude mcp add`):
 ```json
 {
   "mcpServers": {
     "citeagent": {
       "command": "python3",
       "args": ["-m", "citeindex.mcp_server"],
-      "env": {
-        "CITEAGENT_CORPUS_ROOT": "${PWD}/corpus"
-      }
+      "env": { "CITEAGENT_CORPUS_ROOT": "${PWD}/corpus" }
     }
   }
 }
 ```
-
-Or via CLI: `claude mcp add --transport stdio citeagent -- python3 -m citeindex.mcp_server`
 
 **Codex CLI** (`~/.codex/config.toml`):
 ```toml
@@ -127,22 +127,7 @@ env = { CITEAGENT_CORPUS_ROOT = "./corpus" }
 enabled = true
 ```
 
-**Cursor** (`.cursor/mcp.json` at repo root):
-```json
-{
-  "mcpServers": {
-    "citeagent": {
-      "command": "python3",
-      "args": ["-m", "citeindex.mcp_server"],
-      "env": {
-        "CITEAGENT_CORPUS_ROOT": "${workspaceFolder}/corpus"
-      }
-    }
-  }
-}
-```
-
-**Cline / Windsurf** — same pattern: add a `citeagent` entry pointing to `python3 -m citeindex.mcp_server` in the tool's MCP config file.
+**Cursor** (`.cursor/mcp.json`), **Cline**, **Windsurf** — same `python3 -m citeindex.mcp_server` pattern. See [docs/mcp-setup.md](./docs/mcp-setup.md) for exact file paths and formats.
 
 ### System Dependencies
 
@@ -349,6 +334,22 @@ Contributions welcome — especially for:
 ## License
 
 MIT License
+
+---
+
+## Citing CiteAgent
+
+If you use CiteAgent in academic work, please cite:
+
+```bibtex
+@software{citeagent2025,
+  author = {Yuan, Ephrem},
+  title = {CiteAgent: AI Research Agent with Merkle-Verified Retrieval and Citation-Indexed Search},
+  year = {2025},
+  url = {https://github.com/Areopaguaworkshop/citeagent},
+  note = {Python package: citeindex v0.11.0, npm package: @ephremyuan/citeagent v0.3.0}
+}
+```
 
 ---
 

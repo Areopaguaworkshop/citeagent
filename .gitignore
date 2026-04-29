@@ -16,7 +16,7 @@ tests/**/*
 corpus/
 # instruction
 instruction/**/*
-
+docs/
 # Rust
 target/
 Cargo.lock
