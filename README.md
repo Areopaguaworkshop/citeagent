@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="./Citation-Extractor-logo.PNG" alt="CiteIndex Logo" width="150">
+  <img src="./Citation-Extractor-logo.PNG" alt="CiteAgent Logo" width="150">
 </p>
 
-<h1 align="center">CiteIndex</h1>
+<h1 align="center">CiteAgent</h1>
 
 <p align="center">
   <strong>An AI research agent that never hallucinates — every claim is traced, verified, and cited.</strong>
@@ -32,9 +32,9 @@
 
 Large Language Models write fluently but **cannot cite their sources**. When an LLM tells you about a study, a historical event, or a legal precedent, there is no way to verify the claim, trace it back to a page, or reproduce the evidence chain. For scholars, this makes LLM output fundamentally unusable in serious work.
 
-**CiteIndex is an AI research agent — like Claude Code, but for academic scholarship.** Instead of writing code, it reads your research materials, indexes them into a Merkle-verified knowledge base, and answers your questions with deterministic, trace-bound citations. Every claim maps to a specific text passage, verified by cryptographic hash, with a full Merkle proof from leaf node to document root.
+**CiteAgent is an AI research agent — like Claude Code, but for academic scholarship.** Instead of writing code, it reads your research materials, indexes them into a Merkle-verified knowledge base, and answers your questions with deterministic, trace-bound citations. Every claim maps to a specific text passage, verified by cryptographic hash, with a full Merkle proof from leaf node to document root.
 
-### What CiteIndex does for researchers
+### What CiteAgent does for researchers
 
 - **Ingests any source** — PDFs (digital or scanned), URLs, DJVU, EPUB, DOCX, video/audio — into a structured, hash-verified corpus.
 - **Answers questions** with Chicago author-date citations, where every inline reference traces to a specific passage in your documents.
@@ -59,7 +59,7 @@ Migration report: [docs/v12-runtime-migration.md](./docs/v12-runtime-migration.m
 
 ## How It Works
 
-CiteIndex enforces a strict contract: **no claim without evidence, no evidence without a hash, no hash without a Merkle proof.**
+CiteAgent enforces a strict contract: **no claim without evidence, no evidence without a hash, no hash without a Merkle proof.**
 
 ```
 Document → Ingest → Nodes (paragraph/line) → SHA-256 hashes → Merkle tree
@@ -89,18 +89,60 @@ Query → BM25 Retrieval → Ranked Evidence → Generation (LLM or extractive)
 
 ```bash
 # Python CLI (core engine)
-pip install cite-extractor
+pip install citeindex
 
 # OpenCode plugin (AI agent integration)
 bunx @ephremyuan/citeagent@latest install
 ```
 
-The OpenCode plugin installer automatically:
-- Adds the plugin to `~/.config/opencode/opencode.jsonc`
-- Deploys skills, agent configs, and rules to `~/.config/opencode/`
-- Generates agent model mappings in `~/.config/opencode/citeagent.json`
-
 > **See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.md)** for full plugin details — agents, tools, architecture, and uninstall steps.
+
+### Use with Claude Code, Codex, Cursor, and other MCP clients
+
+CiteAgent's Python backend (`citeindex.mcp_server`) is a **standard MCP server** that works with any MCP-compatible tool — not just OpenCode. Add it to your preferred client:
+
+**Claude Code** (project-scoped `.mcp.json` at repo root):
+```json
+{
+  "mcpServers": {
+    "citeagent": {
+      "command": "python3",
+      "args": ["-m", "citeindex.mcp_server"],
+      "env": {
+        "CITEAGENT_CORPUS_ROOT": "${PWD}/corpus"
+      }
+    }
+  }
+}
+```
+
+Or via CLI: `claude mcp add --transport stdio citeagent -- python3 -m citeindex.mcp_server`
+
+**Codex CLI** (`~/.codex/config.toml`):
+```toml
+[mcp_servers.citeagent]
+command = "python3"
+args = ["-m", "citeindex.mcp_server"]
+env = { CITEAGENT_CORPUS_ROOT = "./corpus" }
+enabled = true
+```
+
+**Cursor** (`.cursor/mcp.json` at repo root):
+```json
+{
+  "mcpServers": {
+    "citeagent": {
+      "command": "python3",
+      "args": ["-m", "citeindex.mcp_server"],
+      "env": {
+        "CITEAGENT_CORPUS_ROOT": "${workspaceFolder}/corpus"
+      }
+    }
+  }
+}
+```
+
+**Cline / Windsurf** — same pattern: add a `citeagent` entry pointing to `python3 -m citeindex.mcp_server` in the tool's MCP config file.
 
 ### System Dependencies
 
@@ -210,7 +252,7 @@ cd citeindex-rs
 cargo run
 ```
 
-On first startup against an existing legacy `corpus/`, CiteIndex will:
+On first startup against an existing legacy `corpus/`, CiteAgent will:
 
 1. Create `corpus/.citeindex/`.
 2. Import legacy corpus artifacts and legacy memory logs into the v12 store.
@@ -222,15 +264,18 @@ For new work, use normal ingest commands or the TUI `/ingest` mode. Do not add n
 
 ## OpenCode Plugin
 
-CiteAgent ships as an **OpenCode plugin** (`@ephremyuan/citeagent` on npm) that brings the research engine into your AI coding workflow:
+The `@ephremyuan/citeagent` npm package is an **OpenCode-specific plugin** that adds:
 
 - **5 specialized agents** — researcher, verifier, explore-corpus, ingestor, reviewer
 - **25+ MCP tools** — `cite_search`, `cite_verify`, `cite_ingest`, `cite_render`, `cite_tree`, `cite_memory_*`, and more
 - **Skill & rule assets** auto-deployed on install
+- **Hooks** — SafeHarness, LTL monitor, verification ladder, crypto audit chain
 
 ```bash
 bunx @ephremyuan/citeagent@latest install
 ```
+
+> **Note:** The OpenCode plugin provides the richest experience (agents, skills, hooks). For other MCP clients (Claude Code, Codex, Cursor, Cline, Windsurf), add the MCP server directly — see the config snippets in [Installation](#installation).
 
 See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.md) for full details.
 
@@ -238,7 +283,7 @@ See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.m
 
 ## Architecture
 
-CiteIndex is a **hybrid Rust + Python** system with an **OpenCode plugin** layer:
+CiteAgent is a **hybrid Rust + Python** system with an **OpenCode plugin** layer:
 
 | Layer | Language | Role |
 |-------|----------|------|
@@ -282,8 +327,8 @@ The `.citeindex/` tree is now the runtime source of truth. The legacy folders re
 ## Contributing
 
 ```bash
-git clone https://github.com/areopaguaworkshop/citation.git
-cd citation
+git clone https://github.com/Areopaguaworkshop/citeagent.git
+cd citeagent
 
 # Python development
 pip install -e ".[dev]"
