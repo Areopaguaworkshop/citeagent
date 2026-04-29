@@ -13,10 +13,10 @@ tests/**/*
 # venv
 .venv
 # corpus
-corpus/
+corpus/**/*
 # instruction
 instruction/**/*
-docs/
+docs/**/*
 # Rust
 target/
 Cargo.lock
