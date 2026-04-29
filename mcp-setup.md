@@ -202,7 +202,7 @@ Edit `~/.codeium/windsurf/mcp_config.json`:
 bunx @ephremyuan/citeagent@latest install
 ```
 
-This deploys the plugin plus skills, agent configs, rules, and model mappings. See [plugins/opencode-citeagent/README.md](../plugins/opencode-citeagent/README.md).
+This deploys the plugin plus skills, agent configs, rules, and model mappings. See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.md).
 
 ## Verify the Connection
 

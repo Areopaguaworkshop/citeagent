@@ -20,9 +20,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python 3.12+">
-  <img src="https://img.shields.io/badge/rust-1.75+-orange.svg" alt="Rust 1.75+">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT">
-  <img src="https://img.shields.io/pypi/v/cite-extractor.svg" alt="PyPI version">
+  <img src="https://img.shields.io/pypi/v/citeindex.svg" alt="PyPI version">
   <img src="https://img.shields.io/npm/v/@ephremyuan/citeagent.svg" alt="npm version">
 </p>
 
@@ -40,20 +39,16 @@ Large Language Models write fluently but **cannot cite their sources**. When an 
 - **Answers questions** with Chicago author-date citations, where every inline reference traces to a specific passage in your documents.
 - **Eliminates hallucination** by design: BM25 deterministic retrieval (no embeddings), mandatory evidence-to-claim mapping, and fail-closed integrity verification.
 - **Handles CJK vertical text**, multi-column layouts, footnote isolation, and scanned documents with automatic OCR language detection.
-- **Provides a terminal UI** (ratatui) for interactive research sessions: chat, search, ingest, and browse your citation graph — all from the terminal.
 
 ---
 
 ## Current Status
 
-The live execution path has been migrated onto the v12 NDJSON agent runtime.
+The live execution path runs on the v12 NDJSON agent runtime.
 
-- The Rust core/TUI now talks to long-lived Python agents over the v12 protocol instead of spawning legacy one-shot CLI subprocesses for each action.
-- The runtime now persists its working state under `corpus/.citeindex/`, including Tantivy indexes, structured document trees, session logs, copied source artifacts, and transcript artifacts.
+- The runtime persists its working state under `corpus/.citeindex/`, including Tantivy indexes, structured document trees, session logs, copied source artifacts, and transcript artifacts.
 - Legacy `corpus/*/csl.json`, `document.json`, `merkle.json`, and `corpus/.memory/*.jsonl` are still supported as a compatibility source and are migrated into `corpus/.citeindex/` on startup.
 - After that one-time preparation, chat/search/tool execution uses the persistent v12 store rather than rescanning legacy files during each request.
-
-Migration report: [docs/v12-runtime-migration.md](./docs/v12-runtime-migration.md)
 
 ---
 
@@ -88,7 +83,7 @@ Query → BM25 Retrieval → Ranked Evidence → Generation (LLM or extractive)
 ### Installation
 
 ```bash
-# Python CLI (core engine)
+# Python engine + CLI (required for all usage)
 pip install citeindex
 
 # OpenCode plugin (AI agent integration)
@@ -101,7 +96,7 @@ bunx @ephremyuan/citeagent@latest install
 
 CiteAgent's Python backend (`citeindex.mcp_server`) is a **standard MCP server** that works with any MCP-compatible tool — not just OpenCode.
 
-> **Full setup guide for all tools:** [docs/mcp-setup.md](./docs/mcp-setup.md)
+> **Full setup guide for all tools:** [mcp-setup.md](./mcp-setup.md)
 
 Quick configs:
 
@@ -127,7 +122,7 @@ env = { CITEAGENT_CORPUS_ROOT = "./corpus" }
 enabled = true
 ```
 
-**Cursor** (`.cursor/mcp.json`), **Cline**, **Windsurf** — same `python3 -m citeindex.mcp_server` pattern. See [docs/mcp-setup.md](./docs/mcp-setup.md) for exact file paths and formats.
+**Cursor** (`.cursor/mcp.json`), **Cline**, **Windsurf** — same `python3 -m citeindex.mcp_server` pattern. See [mcp-setup.md](./mcp-setup.md) for exact file paths and formats.
 
 ### System Dependencies
 
@@ -215,35 +210,15 @@ citeindex plugin list
 citeindex plugin install ./my-plugin
 ```
 
-### Terminal UI (Rust)
-
-```bash
-# Build and run the TUI
-cd citeindex-rs && cargo run
-
-# Keyboard shortcuts:
-#   Ctrl+T  — toggle dark/light theme
-#   Ctrl+B  — toggle side panel
-#   /search — switch to search mode
-#   /ingest — switch to ingest mode
-#   /quit   — exit
-```
-
 ### First run and migration behavior
 
-```bash
-# from the repository root
-cd citeindex-rs
-cargo run
-```
-
-On first startup against an existing legacy `corpus/`, CiteAgent will:
+On first run against an existing legacy `corpus/`, CiteAgent will:
 
 1. Create `corpus/.citeindex/`.
 2. Import legacy corpus artifacts and legacy memory logs into the v12 store.
 3. Mark that bootstrap as complete so later requests run directly from `.citeindex`.
 
-For new work, use normal ingest commands or the TUI `/ingest` mode. Do not add new documents manually into the old legacy `corpus/{folder}/` layout if you expect them to appear automatically after migration.
+For new work, use normal ingest commands or the CLI. Do not add new documents manually into the old legacy `corpus/{folder}/` layout if you expect them to appear automatically after migration.
 
 ---
 
@@ -268,13 +243,12 @@ See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.m
 
 ## Architecture
 
-CiteAgent is a **hybrid Rust + Python** system with an **OpenCode plugin** layer:
+CiteAgent is a **Python + TypeScript** system with an **OpenCode plugin** layer:
 
 | Layer | Language | Role |
 |-------|----------|------|
 | **OpenCode Plugin** | TypeScript (npm) | MCP bridge, skill/rule deployment, agent configs |
-| **TUI & Orchestrator** | Rust | Terminal UI (ratatui), runtime bridge, storage preparation, memory view, Python NDJSON IPC |
-| **AI Engine** | Python | Agent adapters, ingestion pipelines, chat/search logic, OCR/document parsing |
+| **AI Engine & CLI** | Python | Agent adapters, ingestion pipelines, chat/search logic, OCR/document parsing, MCP server |
 | **Storage** | Files + indexes | Persistent v12 store under `corpus/.citeindex/`, with legacy `corpus/` compatibility import |
 
 ### Key design rules
@@ -318,18 +292,13 @@ cd citeagent
 # Python development
 pip install -e ".[dev]"
 pytest
-
-# Rust development
-cd citeindex-rs
-cargo build
-cargo test
 ```
 
 Contributions welcome — especially for:
 - Additional citation styles beyond Chicago
 - Language-specific OCR improvements
 - New ingestion pipelines (e.g., EPUB, LaTeX)
-- TUI enhancements (Refs mode, Project mode)
+- MCP server enhancements
 
 ## License
 
