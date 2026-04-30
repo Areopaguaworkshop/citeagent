@@ -54,26 +54,43 @@ function checkPrerequisites(): boolean {
     ok = false
   }
 
-  // Check citeindex module (supports pip, uv tool, and venv installs)
+  // Check citeagent module (the research agent runtime)
+  let citeagentFound = false
+  try {
+    execSync('python3 -c "import citeagent"', { stdio: "pipe", timeout: 10000 })
+    console.log("✅ Python citeagent package found")
+    citeagentFound = true
+  } catch {
+    try {
+      const venvPython = join(process.cwd(), ".venv", "bin", "python3")
+      execSync(`"${venvPython}" -c "import citeagent"`, { stdio: "pipe", timeout: 10000 })
+      console.log("✅ Python citeagent package found (project .venv)")
+      citeagentFound = true
+    } catch {
+      // not found
+    }
+  }
+  if (!citeagentFound) {
+    console.error("❌ citeagent not found. Install with:")
+    console.error("     pip install citeagent       (into active venv)")
+    ok = false
+  }
+
+  // Check citeindex module (the ingestion engine, required for cite ingest)
   let citeindexFound = false
-  // Try citeindex CLI on PATH first (covers `uv tool install` and any pip install
-  // that exposes the console script). The CLI doesn't support --version, so we
-  // use `command -v` which only checks for presence on PATH.
   try {
     execSync("command -v citeindex", { stdio: "pipe", timeout: 10000, shell: "/bin/sh" })
     console.log("✅ Python citeindex package found (CLI on PATH)")
     citeindexFound = true
   } catch {
-    // Try system python import (pip install into active env)
     try {
       execSync('python3 -c "import citeindex"', { stdio: "pipe", timeout: 10000 })
       console.log("✅ Python citeindex package found (system python)")
       citeindexFound = true
     } catch {
-      // Try project .venv
       try {
-        const venvPython = join(process.cwd(), ".venv", "bin", "python3")
-        execSync(`"${venvPython}" -c "import citeindex"`, { stdio: "pipe", timeout: 10000 })
+        const venvPython2 = join(process.cwd(), ".venv", "bin", "python3")
+        execSync(`"${venvPython2}" -c "import citeindex"`, { stdio: "pipe", timeout: 10000 })
         console.log("✅ Python citeindex package found (project .venv)")
         citeindexFound = true
       } catch {
@@ -82,10 +99,9 @@ function checkPrerequisites(): boolean {
     }
   }
   if (!citeindexFound) {
-    console.error("❌ citeindex not found. Install with one of:")
-    console.error("     uv tool install citeindex   (recommended, global CLI)")
-    console.error("     pip install citeindex       (into active venv)")
-    ok = false
+    console.warn("⚠️  citeindex not found (needed for document ingestion). Install with:")
+    console.warn("     uv tool install citeindex   (recommended, global CLI)")
+    console.warn("     pip install citeindex       (into active venv)")
   }
 
   // Check tesseract (optional)

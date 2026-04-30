@@ -331,18 +331,6 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
       },
     }),
 
-    cite_memory_summarize: tool({
-      description: "Summarize a set of memory entries.",
-      args: {
-        entry_ids: z
-          .array(z.string())
-          .describe("List of memory entry IDs to summarize"),
-      },
-      async execute({ entry_ids }) {
-        return call("memory_summarize", { entry_ids })
-      },
-    }),
-
     // ── Cryptographic ──────────────────────────────────
 
     cite_crypto_sign: tool({
@@ -411,38 +399,6 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
       },
     }),
 
-    cite_safeharness_checkpoint: tool({
-      description:
-        "SafeHarness Layer 4: create a state checkpoint before a write action.",
-      args: {
-        tool_name: z.string().describe("Tool being called"),
-        input_hash: z
-          .string()
-          .optional()
-          .describe("SHA-256 hash of input"),
-      },
-      async execute({ tool_name, input_hash }) {
-        return call("safeharness_checkpoint", { tool_name, input_hash })
-      },
-    }),
 
-    cite_safeharness_rollback: tool({
-      description:
-        "SafeHarness Layer 4: rollback from a checkpoint (placeholder).",
-      args: {
-        checkpoint_id: z.string().describe("Checkpoint to rollback"),
-      },
-      async execute({ checkpoint_id }) {
-        return call("safeharness_rollback", { checkpoint_id })
-      },
-    }),
-
-    cite_safeharness_status: tool({
-      description: "Get the current SafeHarness security status.",
-      args: {},
-      async execute() {
-        return call("safeharness_status", {})
-      },
-    }),
   }
 }
