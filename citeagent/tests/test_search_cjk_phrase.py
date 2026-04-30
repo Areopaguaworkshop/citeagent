@@ -1,6 +1,6 @@
-from citeindex.agents.indexing import IndexingAgent
-from citeindex.agents.query_planner import QueryPlanner
-from citeindex.agents.retrieval import RetrievalAgent
+from citeagent.agents.indexing import IndexingAgent
+from citeagent.agents.query_planner import QueryPlanner
+from citeagent.agents.retrieval import RetrievalAgent
 
 
 def _make_node(node_id: str, text: str, page: int = 1) -> dict:

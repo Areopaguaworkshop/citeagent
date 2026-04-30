@@ -12,7 +12,7 @@ def _configure_logging(verbose: bool) -> None:
 
 
 def _run_ingest(args: argparse.Namespace) -> int:
-    from citeindex.ingestion import CiteIndexIngestionOrchestrator
+    from citeindex import CiteIndexIngestionOrchestrator
     from citeindex.ingestion.models import IngestionConfig
 
     config = IngestionConfig(
@@ -48,7 +48,7 @@ def _run_ingest(args: argparse.Namespace) -> int:
 
 
 def _run_search(args: argparse.Namespace) -> int:
-    from citeindex.agents.chat import SearchPipeline
+    from citeagent.agents.chat import SearchPipeline
 
     pipeline = SearchPipeline(
         corpus_root=args.corpus_root,
@@ -65,7 +65,7 @@ def _run_search(args: argparse.Namespace) -> int:
 
 
 def _run_chat(args: argparse.Namespace) -> int:
-    from citeindex.agents.chat import ChatPipeline
+    from citeagent.agents.chat import ChatPipeline
 
     pipeline = ChatPipeline(
         corpus_root=args.corpus_root,
@@ -82,7 +82,7 @@ def _run_chat(args: argparse.Namespace) -> int:
         return 0 if result.get("status") == "ok" else 1
 
     # Interactive loop
-    print("CiteIndex Chat (type /quit to exit)")
+    print("CiteAgent Chat (type /quit to exit)")
     print("---")
     while True:
         try:
@@ -107,12 +107,12 @@ def _run_chat(args: argparse.Namespace) -> int:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="citeindex", description="CiteIndex — AI research knowledge infrastructure"
+        prog="citeagent", description="CiteAgent — AI research agent for academic scholars"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     ingest_parser = subparsers.add_parser(
-        "ingest", help="Deterministic CiteIndex ingestion"
+        "ingest", help="Deterministic ingestion (via citeindex package)"
     )
     ingest_parser.add_argument("input", help="Input file path or URL")
     ingest_parser.add_argument(
@@ -274,7 +274,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # ── plugin subcommand ─────────────────────────────────────────────
     plugin_parser = subparsers.add_parser(
-        "plugin", help="Manage CiteIndex plugins"
+        "plugin", help="Manage CiteAgent plugins"
     )
     plugin_parser.add_argument(
         "action", choices=["install", "list"],
@@ -295,7 +295,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _run_memory(args: argparse.Namespace) -> int:
-    from citeindex.agents.memory import MemoryStore
+    from citeagent.agents.memory import MemoryStore
 
     store = MemoryStore(memory_dir=f"{args.corpus_root}/.memory")
 

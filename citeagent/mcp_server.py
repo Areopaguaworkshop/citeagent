@@ -3,8 +3,8 @@
 CiteAgent MCP Server — exposes CiteAgent engine functionality via the
 Model Context Protocol (stdio transport).
 
-Server name : citeagent-kernel
-Version     : 0.3.1
+Server name : citeagent
+Version     : 0.4.0
 
 Each tool is an async shim that delegates to the real CiteAgent Python
 functions.
@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import hashlib
-import importlib.util
 import json
 import logging
 import os
@@ -32,33 +31,13 @@ logger = logging.getLogger(__name__)
 # Server instance
 # ---------------------------------------------------------------------------
 
-SERVER_NAME = "citeagent-kernel"
-SERVER_VERSION = "0.3.1"
+SERVER_NAME = "citeagent"
+SERVER_VERSION = "0.4.0"
 
 server = Server(SERVER_NAME, version=SERVER_VERSION)
 
 STUB_NOTE = "stub implementation — not yet fully implemented"
 PLACEHOLDER_NOTE = "Not yet implemented"
-
-
-def _import_direct(module_path: str, package_root: str | None = None):
-    """Import a Python module directly by file path, bypassing __init__.py chains.
-
-    This avoids triggering transitive imports from package __init__.py
-    (e.g., citeindex.ingestion.__init__ → master → pipelines → dspy_extract → dspy).
-    """
-    if package_root is None:
-        package_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    # Convert dotted module path to file path
-    rel = module_path.replace(".", os.sep) + ".py"
-    full = os.path.join(package_root, rel)
-    if not os.path.isfile(full):
-        raise ImportError(f"Module file not found: {full}")
-    mod_name = module_path.rsplit(".", 1)[-1]
-    spec = importlib.util.spec_from_file_location(module_path, full)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
 
 # ---------------------------------------------------------------------------
 # Corpus root resolution
@@ -95,7 +74,7 @@ def _get_search_pipeline():
     """Lazy-initialize and return a SearchPipeline."""
     global _search_pipeline
     if _search_pipeline is None:
-        from citeindex.agents.chat import SearchPipeline
+        from citeagent.agents.chat import SearchPipeline
         _search_pipeline = SearchPipeline(corpus_root=get_corpus_root())
     return _search_pipeline
 
@@ -104,7 +83,7 @@ def _get_memory_store():
     """Lazy-initialize and return a MemoryStore."""
     global _memory_store
     if _memory_store is None:
-        from citeindex.agents.memory import MemoryStore
+        from citeagent.agents.memory import MemoryStore
         _memory_store = MemoryStore(memory_dir=os.path.join(get_corpus_root(), ".memory"))
     return _memory_store
 
@@ -113,7 +92,7 @@ def _get_ingestion_orchestrator():
     """Lazy-initialize and return a CiteIndexIngestionOrchestrator."""
     global _ingestion_orchestrator
     if _ingestion_orchestrator is None:
-        from citeindex.ingestion.master import CiteIndexIngestionOrchestrator
+        from citeindex import CiteIndexIngestionOrchestrator
         _ingestion_orchestrator = CiteIndexIngestionOrchestrator(corpus_root=get_corpus_root())
     return _ingestion_orchestrator
 
@@ -122,7 +101,7 @@ def _get_corpus_loader():
     """Lazy-initialize and return a loaded CorpusLoader."""
     global _corpus_loader
     if _corpus_loader is None:
-        from citeindex.agents.corpus_loader import CorpusLoader
+        from citeagent.agents.corpus_loader import CorpusLoader
         _corpus_loader = CorpusLoader(corpus_root=get_corpus_root())
         _corpus_loader.load()  # load() is sync; callers should use via asyncio.to_thread
     return _corpus_loader
@@ -266,32 +245,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             },
         },
     },
-    {
-        "name": "ag_write_edge",
-        "description": "Write an edge (relationship) in the argument graph.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "source_claim_id": {
-                    "type": "string",
-                    "description": "Source claim ID",
-                },
-                "target_claim_id": {
-                    "type": "string",
-                    "description": "Target claim ID",
-                },
-                "edge_type": {
-                    "type": "string",
-                    "description": "Edge type (supports, contradicts, etc.)",
-                },
-                "weight": {
-                    "type": "number",
-                    "description": "Optional weight/confidence score",
-                },
-            },
-            "required": ["source_claim_id", "target_claim_id", "edge_type"],
-        },
-    },
+
     {
         "name": "merkle_compute",
         "description": "Compute a Merkle hash for a given payload.",
@@ -533,21 +487,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             },
         },
     },
-    {
-        "name": "memory_summarize",
-        "description": "Summarize a set of memory entries.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "entry_ids": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "List of memory entry IDs to summarize",
-                },
-            },
-            "required": ["entry_ids"],
-        },
-    },
+
     # Cryptographic tools
     {
         "name": "crypto_sign",
@@ -610,37 +550,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             "required": ["tool_name", "input"],
         },
     },
-    {
-        "name": "safeharness_checkpoint",
-        "description": "SafeHarness Layer 4: create a state checkpoint before a write action.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "tool_name": {"type": "string", "description": "Tool being called"},
-                "input_hash": {"type": "string", "description": "SHA-256 hash of input"},
-            },
-            "required": ["tool_name"],
-        },
-    },
-    {
-        "name": "safeharness_rollback",
-        "description": "SafeHarness Layer 4: rollback from a checkpoint (placeholder).",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "checkpoint_id": {"type": "string", "description": "Checkpoint to rollback"},
-            },
-            "required": ["checkpoint_id"],
-        },
-    },
-    {
-        "name": "safeharness_status",
-        "description": "Get the current SafeHarness security status.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {},
-        },
-    },
+
 ]
 
 # ---------------------------------------------------------------------------
@@ -742,7 +652,7 @@ async def _handle_search_claims(args: dict[str, Any]) -> dict[str, Any]:
     query: str = args.get("query", "")
     limit: int = args.get("limit", 10)
     try:
-        from citeindex.agents.v12_runtime import handle_claim_extraction
+        from citeagent.agents.v12_runtime import handle_claim_extraction
         result = await asyncio.wait_for(
             asyncio.to_thread(handle_claim_extraction, {"text": query, "query": query}),
             timeout=5.0,
@@ -876,7 +786,7 @@ async def _handle_index_claim(args: dict[str, Any]) -> dict[str, Any]:
             "note": "stub fallback — empty claim text",
         }
     try:
-        from citeindex.agents.v12_runtime import handle_claim_extraction
+        from citeagent.agents.v12_runtime import handle_claim_extraction
         result = await asyncio.wait_for(
             asyncio.to_thread(handle_claim_extraction, {
                 "text": claim_text,
@@ -919,13 +829,46 @@ async def _handle_index_claim(args: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _handle_delete_document(args: dict[str, Any]) -> dict[str, Any]:
-    """No Python implementation exists for document deletion."""
+    """Delete a document and its corpus artifacts."""
+    import shutil
     source_id: str = args.get("source_id", "")
-    return {
-        "source_id": source_id,
-        "status": "deleted",
-        "note": PLACEHOLDER_NOTE,
-    }
+    corpus_root = get_corpus_root()
+
+    # Find the folder matching this source_id
+    deleted = False
+    if os.path.isdir(corpus_root):
+        for entry in os.listdir(corpus_root):
+            entry_path = os.path.join(corpus_root, entry)
+            if not os.path.isdir(entry_path):
+                continue
+            # Check if csl.json id matches source_id
+            csl_path = os.path.join(entry_path, "csl.json")
+            if os.path.isfile(csl_path):
+                try:
+                    with open(csl_path, "r", encoding="utf-8") as f:
+                        csl = json.load(f)
+                    if csl.get("id") == source_id or entry == source_id:
+                        shutil.rmtree(entry_path)
+                        deleted = True
+                        break
+                except (json.JSONDecodeError, OSError):
+                    continue
+
+    # Also try direct folder name match
+    direct_path = os.path.join(corpus_root, source_id)
+    if not deleted and os.path.isdir(direct_path):
+        shutil.rmtree(direct_path)
+        deleted = True
+
+    if not deleted:
+        return {"source_id": source_id, "status": "not_found"}
+
+    # Reset lazy singletons so they reload fresh data
+    global _search_pipeline, _corpus_loader
+    _search_pipeline = None
+    _corpus_loader = None
+
+    return {"source_id": source_id, "status": "deleted"}
 
 
 async def _handle_ag_query_claims(args: dict[str, Any]) -> dict[str, Any]:
@@ -1000,7 +943,7 @@ async def _handle_ag_query_contradictions(args: dict[str, Any]) -> dict[str, Any
         ]
         return {"results": results, "total": len(results), "note": "stub fallback — no corpus directory"}
     try:
-        from citeindex.agents.v12_runtime import handle_contradiction
+        from citeagent.agents.v12_runtime import handle_contradiction
         # Build a minimal claims list from the corpus if possible
         loader = await asyncio.wait_for(
             asyncio.to_thread(_get_corpus_loader),
@@ -1052,25 +995,14 @@ async def _handle_ag_query_contradictions(args: dict[str, Any]) -> dict[str, Any
         }
 
 
-async def _handle_ag_write_edge(args: dict[str, Any]) -> dict[str, Any]:
-    """No Python implementation exists for argument graph edge writes."""
-    return {
-        "source_claim_id": args.get("source_claim_id", ""),
-        "target_claim_id": args.get("target_claim_id", ""),
-        "edge_type": args.get("edge_type", ""),
-        "weight": args.get("weight", 1.0),
-        "status": "written",
-        "note": PLACEHOLDER_NOTE,
-    }
+
 
 
 async def _handle_merkle_compute(args: dict[str, Any]) -> dict[str, Any]:
     """Compute SHA-256 Merkle hash using citeindex.ingestion.deterministic."""
     payload: str = args.get("payload", "")
     try:
-        deterministic = _import_direct("citeindex.ingestion.deterministic")
-        sha256_hex = deterministic.sha256_hex
-        build_merkle_tree = deterministic.build_merkle_tree
+        from citeindex.ingestion.deterministic import sha256_hex, build_merkle_tree
         leaf_hash = sha256_hex(payload)
         tree = build_merkle_tree([leaf_hash])
         return {
@@ -1122,7 +1054,7 @@ async def _handle_merkle_verify(args: dict[str, Any]) -> dict[str, Any]:
         if matching_sources:
             result["verified_sources"] = matching_sources
             # Use the integrity verifier for a more thorough check
-            from citeindex.agents.integrity import IntegrityVerifier
+            from citeagent.agents.integrity import IntegrityVerifier
             verifier = IntegrityVerifier()
             # Build a minimal evidence item for verification
             evidence_item = {
@@ -1195,7 +1127,7 @@ async def _handle_tree_load(args: dict[str, Any]) -> dict[str, Any]:
     source_id: str = args.get("source_id", "")
     depth: int = args.get("depth", -1)
     try:
-        from citeindex.agents.pageindex_retrieval import PageIndexRetrievalAgent
+        from citeagent.agents.pageindex_retrieval import PageIndexRetrievalAgent
         agent = PageIndexRetrievalAgent(corpus_root=get_corpus_root())
         trees = await asyncio.wait_for(
             asyncio.to_thread(agent._load_trees, source_id if source_id else None),
@@ -1240,7 +1172,7 @@ async def _handle_tree_traverse(args: dict[str, Any]) -> dict[str, Any]:
     source_id: str = args.get("source_id", "")
     path: str = args.get("path", "")
     try:
-        from citeindex.agents.pageindex_retrieval import PageIndexRetrievalAgent
+        from citeagent.agents.pageindex_retrieval import PageIndexRetrievalAgent
         agent = PageIndexRetrievalAgent(corpus_root=get_corpus_root())
         trees = await asyncio.wait_for(
             asyncio.to_thread(agent._load_trees, source_id if source_id else None),
@@ -1297,19 +1229,50 @@ async def _handle_tree_traverse(args: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _handle_regex_search(args: dict[str, Any]) -> dict[str, Any]:
-    """No dedicated Python regex search implementation exists."""
+    """Search indexed documents using a regular expression."""
+    import re
     pattern: str = args.get("pattern", "")
     source_id: str | None = args.get("source_id")
     limit: int = args.get("limit", 10)
-    results = [
-        {
-            "match": f"Stub match {i} for pattern '{pattern}'",
-            "source_id": source_id or f"stub-src-{i}",
-            "offset": i * 100,
-        }
-        for i in range(min(limit, 3))
-    ]
-    return {"results": results, "total": len(results), "note": PLACEHOLDER_NOTE}
+    context_chars: int = args.get("context_chars", 120)
+
+    try:
+        compiled = re.compile(pattern, re.IGNORECASE)
+    except re.error as e:
+        return {"results": [], "total": 0, "error": f"Invalid regex: {e}"}
+
+    try:
+        loader = await asyncio.wait_for(
+            asyncio.to_thread(_get_corpus_loader),
+            timeout=5.0,
+        )
+        nodes = loader.all_nodes
+        if source_id:
+            nodes = loader.get_nodes_by_source(source_id)
+
+        results = []
+        for node in nodes:
+            text = node.get("text", "")
+            for match in compiled.finditer(text):
+                start = max(0, match.start() - context_chars // 2)
+                end = min(len(text), match.end() + context_chars // 2)
+                results.append({
+                    "doc_id": node.get("source_id", ""),
+                    "node_id": node.get("node_id", ""),
+                    "match_text": match.group(),
+                    "context": text[start:end],
+                    "locator": node.get("locator", {}),
+                })
+                if len(results) >= limit:
+                    break
+            if len(results) >= limit:
+                break
+
+        return {"results": results, "total": len(results)}
+    except asyncio.TimeoutError:
+        return {"results": [], "total": 0, "error": "Corpus load timed out"}
+    except Exception as exc:
+        return {"results": [], "total": 0, "error": str(exc)}
 
 
 async def _handle_memory_save(args: dict[str, Any]) -> dict[str, Any]:
@@ -1570,32 +1533,7 @@ async def _handle_memory_consolidate(args: dict[str, Any]) -> dict[str, Any]:
         return {"consolidated_count": 0, "error": str(exc)}
 
 
-async def _handle_memory_summarize(args: dict[str, Any]) -> dict[str, Any]:
-    """Summarize a set of memory entries (MVP: just concatenate)."""
-    entry_ids: list[str] = args.get("entry_ids", [])
-    try:
-        contents = []
-        for root, _dirs, files in os.walk(os.path.join(get_corpus_root(), ".memory")):
-            for f in files:
-                if f.endswith(".jsonl"):
-                    filepath = os.path.join(root, f)
-                    with open(filepath, "r", encoding="utf-8") as f_obj:
-                        for line in f_obj:
-                            try:
-                                entry = json.loads(line.strip())
-                                if entry.get("entry_id") in entry_ids:
-                                    contents.append(entry.get("content", ""))
-                            except:
-                                continue
 
-        summary = contents[0] if len(contents) == 1 else f"Consolidated {len(contents)} entries: " + " | ".join(c[:80] for c in contents)
-        return {"summary": summary, "source_count": len(contents)}
-    except Exception as exc:
-        return {"summary": "", "source_count": 0, "error": str(exc)}
-
-
-# ---------------------------------------------------------------------------
-# Cryptographic tools
 # ---------------------------------------------------------------------------
 
 
@@ -1712,7 +1650,7 @@ async def _handle_safeharness_check(args: dict[str, Any]) -> dict[str, Any]:
 
     # Layer 3 — permission check (risk tier classification)
     tier = args.get("risk_tier", "read")
-    tiers = {"read": ["search_documents", "search_claims", "search_memory", "tree_load", "tree_traverse", "csl_render", "merkle_verify", "ag_query_claims", "ag_query_contradictions", "audit_retrieve", "memory_retrieve_tier", "regex_search"], "workspace": ["index_claim", "memory_save", "memory_store_tier", "memory_consolidate", "memory_summarize", "merkle_compute", "crypto_sign", "crypto_verify", "crypto_audit_trail", "safeharness_check", "safeharness_sanitize", "safeharness_checkpoint", "safeharness_rollback", "safeharness_status"], "network": ["index_document", "tantivy_search", "tantivy_index"], "system": ["delete_document", "ag_write_edge"]}
+    tiers = {"read": ["search_documents", "search_claims", "search_memory", "tree_load", "tree_traverse", "csl_render", "merkle_verify", "ag_query_claims", "ag_query_contradictions", "audit_retrieve", "memory_retrieve_tier", "regex_search"], "workspace": ["index_claim", "memory_save", "memory_store_tier", "memory_consolidate", "merkle_compute", "crypto_sign", "crypto_verify", "crypto_audit_trail", "safeharness_check", "safeharness_sanitize"], "network": ["index_document", "tantivy_search", "tantivy_index"], "system": ["delete_document"]}
     allowed_tier = None
     for t, tools in tiers.items():
         if tool_name in tools:
@@ -1755,64 +1693,7 @@ async def _handle_safeharness_sanitize(args: dict[str, Any]) -> dict[str, Any]:
     return {"sanitized_input": sanitized, "modifications": modifications}
 
 
-async def _handle_safeharness_checkpoint(args: dict[str, Any]) -> dict[str, Any]:
-    """SafeHarness Layer 4: create a state checkpoint before a write action."""
-    tool_name: str = args.get("tool_name", "")
-    input_hash: str = args.get("input_hash", "")
-    checkpoint_id = f"chk-{_sha256_hex(tool_name + input_hash)[:12]}"
 
-    try:
-        cp_dir = os.path.join(get_corpus_root(), ".checkpoints")
-        os.makedirs(cp_dir, exist_ok=True)
-        cp_path = os.path.join(cp_dir, f"{checkpoint_id}.json")
-        cp_data = {"checkpoint_id": checkpoint_id, "tool_name": tool_name, "input_hash": input_hash, "timestamp": str(logger.handlers[0].baseFilename if logger.handlers else ""), "rollback_available": True}
-        with open(cp_path, "w") as f_obj:
-            json.dump(cp_data, f_obj)
-
-        return {"checkpoint_id": checkpoint_id, "rollback_available": True, "path": cp_path}
-    except Exception as exc:
-        return {"checkpoint_id": checkpoint_id, "rollback_available": False, "error": str(exc)}
-
-
-async def _handle_safeharness_rollback(args: dict[str, Any]) -> dict[str, Any]:
-    """SafeHarness Layer 4: rollback from a checkpoint (placeholder)."""
-    checkpoint_id: str = args.get("checkpoint_id", "")
-    try:
-        cp_path = os.path.join(get_corpus_root(), ".checkpoints", f"{checkpoint_id}.json")
-        if not os.path.isfile(cp_path):
-            return {"rolled_back": False, "reason": "checkpoint not found"}
-
-        with open(cp_path, "r") as f_obj:
-            cp_data = json.load(f_obj)
-
-        # Placeholder: real rollback would restore corpus state here
-        cp_data["rollback_available"] = False
-        with open(cp_path, "w") as f_obj:
-            json.dump(cp_data, f_obj)
-
-        return {"rolled_back": True, "checkpoint_id": checkpoint_id, "reason": "rollback completed (placeholder — actual state restoration not yet implemented)"}
-    except Exception as exc:
-        return {"rolled_back": False, "reason": str(exc)}
-
-
-async def _handle_safeharness_status(args: dict[str, Any]) -> dict[str, Any]:
-    """Return current SafeHarness status."""
-    anomalies = 0
-    checkpoints_count = 0
-    try:
-        cp_dir = os.path.join(get_corpus_root(), ".checkpoints")
-        if os.path.isdir(cp_dir):
-            checkpoints_count = len([f for f in os.listdir(cp_dir) if f.endswith(".json")])
-    except:
-        pass
-
-    return {
-        "privilege_ceiling": "system",
-        "anomaly_count": anomalies,
-        "checkpoints_count": checkpoints_count,
-        "max_anomalies_before_degradation": 3,
-        "status": "operational",
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -1828,7 +1709,7 @@ _HANDLERS: dict[str, Any] = {
     "delete_document": _handle_delete_document,
     "ag_query_claims": _handle_ag_query_claims,
     "ag_query_contradictions": _handle_ag_query_contradictions,
-    "ag_write_edge": _handle_ag_write_edge,
+
     "merkle_compute": _handle_merkle_compute,
     "merkle_verify": _handle_merkle_verify,
     "csl_render": _handle_csl_render,
@@ -1843,15 +1724,13 @@ _HANDLERS: dict[str, Any] = {
     "memory_store_tier": _handle_memory_store_tier,
     "memory_retrieve_tier": _handle_memory_retrieve_tier,
     "memory_consolidate": _handle_memory_consolidate,
-    "memory_summarize": _handle_memory_summarize,
+
     "crypto_sign": _handle_crypto_sign,
     "crypto_verify": _handle_crypto_verify,
     "crypto_audit_trail": _handle_crypto_audit_trail,
     "safeharness_check": _handle_safeharness_check,
     "safeharness_sanitize": _handle_safeharness_sanitize,
-    "safeharness_checkpoint": _handle_safeharness_checkpoint,
-    "safeharness_rollback": _handle_safeharness_rollback,
-    "safeharness_status": _handle_safeharness_status,
+
 }
 
 # ---------------------------------------------------------------------------
@@ -1861,7 +1740,7 @@ _HANDLERS: dict[str, Any] = {
 
 async def main() -> None:
     """Run the MCP server over stdio."""
-    parser = argparse.ArgumentParser(description="CiteIndex MCP Server")
+    parser = argparse.ArgumentParser(description="CiteAgent MCP Server")
     parser.add_argument(
         "--corpus-root",
         default=None,

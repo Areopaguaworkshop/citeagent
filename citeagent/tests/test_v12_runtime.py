@@ -1,7 +1,7 @@
 import hashlib
 import json
 
-from citeindex.agents.v12_runtime import (
+from citeagent.agents.v12_runtime import (
     _hash_output,
     _index_ingested_document,
     _chat_via_tools,

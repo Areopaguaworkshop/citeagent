@@ -183,7 +183,7 @@ class GenerationAgent:
     ) -> tuple:
         """Generate answer using LLM with evidence context."""
         try:
-            from ..llm import get_llm_model
+            from citeindex.llm import get_llm_model
             import dspy
         except ImportError:
             logger.warning("dspy not available, falling back to extractive answer")
@@ -268,7 +268,7 @@ class GenerationAgent:
         if not csl.get("title"):
             return ""
         try:
-            from ..citation_style import format_bibliography
+            from citeindex.citation_style import format_bibliography
             csl_copy = dict(csl)
             # Remove internal fields
             csl_copy.pop("_source_id", None)
@@ -331,5 +331,5 @@ class GenerationAgent:
             return []
 
         # Build proof path
-        from ..ingestion.deterministic import build_merkle_proof
+        from citeindex.ingestion.deterministic import build_merkle_proof
         return build_merkle_proof(merkle, leaf_index)

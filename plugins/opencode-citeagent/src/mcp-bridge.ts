@@ -8,7 +8,7 @@ import { execSync } from "child_process"
  * CiteAgentBridge — plugin-owned subprocess that talks to the Python backend.
  *
  * Unlike the old CiteAgentMcpBridge (which relied on OpenCode's MCP client
- * to spawn the server), this bridge spawns `citeindex.mcp_server` itself,
+ * to spawn the server), this bridge spawns `citeagent.mcp_server` itself,
  * sets the correct environment, and owns the full connection lifecycle.
  * This eliminates the -32000 Connection Closed errors caused by OpenCode's
  * MCP client managing the stdio lifecycle.

@@ -1,4 +1,4 @@
-"""CiteIndex Agent & Retrieval Layer (Tier 2).
+"""CiteAgent Agent & Retrieval Layer (Tier 2).
 
 Deterministic 7-agent pipeline: indexing → query planning → retrieval →
 clarification → generation → integrity verification.
@@ -41,4 +41,4 @@ def __getattr__(name):
     if name == "ChatPipeline":
         from .chat import ChatPipeline
         return ChatPipeline
-    raise AttributeError(f"module 'citeindex.agents' has no attribute {name!r}")
+    raise AttributeError(f"module 'citeagent.agents' has no attribute {name!r}")

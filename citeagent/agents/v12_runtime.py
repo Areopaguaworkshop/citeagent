@@ -640,8 +640,8 @@ def handle_librarian(
 
 
 def handle_ingest(inputs: Dict[str, Any], _call_tool: Optional[ToolCaller] = None) -> Dict[str, Any]:
-    from ..ingestion import CiteIndexIngestionOrchestrator
-    from ..ingestion.models import IngestionConfig
+    from citeindex import CiteIndexIngestionOrchestrator
+    from citeindex.ingestion.models import IngestionConfig
 
     input_ref = inputs.get("input_ref") or inputs.get("path") or inputs.get("url")
     if not isinstance(input_ref, str) or not input_ref.strip():
@@ -777,33 +777,6 @@ def handle_hierarchy_classification(
     }
 
 
-def handle_structure(
-    inputs: Dict[str, Any], _call_tool: Optional[ToolCaller] = None
-) -> Dict[str, Any]:
-    claims = inputs.get("claims") or []
-    if not isinstance(claims, list):
-        claims = []
-
-    nodes = []
-    for idx, claim in enumerate(claims[:10], start=1):
-        if not isinstance(claim, dict):
-            continue
-        nodes.append(
-            {
-                "id": f"node-{idx}",
-                "heading_suggestion": claim.get("section_ref") or f"Section {idx}",
-                "supporting_claims": [claim.get("claim_id", f"claim-{idx}")],
-                "dependency_ids": [],
-                "coverage": "Partial",
-                "comparable_section_refs": [],
-            }
-        )
-
-    return {
-        "agent": "StructureAgent",
-        "nodes": nodes,
-    }
-
 
 def _handle_pageindex_retrieval(
     inputs: Dict[str, Any], _call_tool: Optional[ToolCaller] = None
@@ -821,7 +794,7 @@ HANDLERS: Dict[str, Callable[[Dict[str, Any], Optional[ToolCaller]], Dict[str, A
     "GapIdentificationAgent": handle_gap_identification,
     "LiteratureReviewAgent": handle_literature_review,
     "HierarchyClassificationAgent": handle_hierarchy_classification,
-    "StructureAgent": handle_structure,
+
     "PageIndexRetrievalAgent": _handle_pageindex_retrieval,
 }
 
