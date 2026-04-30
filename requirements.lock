@@ -10,90 +10,173 @@
 #   universal: false
 
 -e file:.
+accelerate==1.13.0
+    # via mineru
 aiofiles==24.1.0
     # via crawl4ai
+    # via gradio
+    # via mineru-vl-utils
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.12.15
+aiohttp==3.13.4
     # via crawl4ai
     # via fsspec
     # via langchain-community
     # via litellm
+    # via vllm
 aiosignal==1.4.0
     # via aiohttp
 aiosqlite==0.21.0
     # via crawl4ai
+albucore==0.0.24
+    # via albumentations
+albumentations==2.0.8
+    # via mineru
 alembic==1.16.4
     # via optuna
 alphashape==1.3.1
     # via crawl4ai
+annotated-doc==0.0.4
+    # via fastapi
+    # via typer
 annotated-types==0.7.0
     # via pydantic
+anthropic==0.71.0
+    # via vllm
+antlr4-python3-runtime==4.9.3
+    # via omegaconf
 anyio==4.9.0
+    # via anthropic
     # via asyncer
     # via dspy
+    # via gradio
     # via httpx
+    # via mcp
     # via openai
+    # via sse-starlette
+    # via starlette
+    # via watchfiles
+apache-tvm-ffi==0.1.10
+    # via flashinfer-python
+asteroid-filterbanks==0.4.0
+    # via pyannote-audio
+astor==0.8.1
+    # via depyf
 asyncer==0.0.8
     # via dspy
 attrs==25.3.0
     # via aiohttp
     # via jsonschema
     # via referencing
+av==17.0.1
+    # via faster-whisper
+    # via qwen-vl-utils
 babel==2.17.0
     # via courlan
 backoff==2.2.1
     # via dspy
-beautifulsoup4==4.13.4
+beautifulsoup4==4.14.3
     # via crawl4ai
+    # via mineru
     # via paddlex
+blake3==1.0.8
+    # via vllm
+boto3==1.43.1
+    # via mineru
+botocore==1.43.1
+    # via boto3
+    # via s3transfer
 brotli==1.1.0
     # via crawl4ai
+    # via gradio
 cachetools==6.1.0
     # via dspy
     # via premailer
+    # via vllm
+cbor2==6.0.1
+    # via vllm
 certifi==2025.7.14
     # via httpcore
     # via httpx
     # via requests
+    # via sentry-sdk
     # via trafilatura
 cffi==1.17.1
     # via cryptography
+    # via soundfile
 chardet==5.2.0
     # via crawl4ai
     # via paddlex
+    # via readability-lxml
 charset-normalizer==3.4.2
     # via htmldate
     # via pdfminer-six
+    # via reportlab
     # via requests
     # via trafilatura
+citeindex==0.12.0
+    # via citeagent
 citeproc-py==0.8.2
-    # via cite-extractor
-click==8.2.1
+    # via citeagent
+    # via citeindex
+click==8.1.8
     # via alphashape
     # via click-log
     # via crawl4ai
+    # via flashinfer-python
     # via litellm
+    # via magika
+    # via mineru
     # via nltk
+    # via pdftext
+    # via ray
+    # via rich-toolkit
+    # via typer
+    # via uvicorn
 click-log==0.4.0
     # via alphashape
 cloudpickle==3.1.1
     # via dspy
+    # via vllm
+cobble==0.1.4
+    # via mammoth
 colorlog==6.9.0
     # via optuna
     # via paddlex
+    # via robust-downloader
+compressed-tensors==0.12.2
+    # via vllm
+contourpy==1.3.3
+    # via matplotlib
 courlan==1.3.2
     # via trafilatura
 crawl4ai==0.7.2
-    # via cite-extractor
+    # via citeindex
 cryptography==45.0.5
     # via pdfminer-six
+    # via pyjwt
     # via pyopenssl
 cssselect==1.3.0
     # via crawl4ai
     # via premailer
+    # via readability-lxml
 cssutils==2.11.1
     # via premailer
+ctranslate2==4.4.0
+    # via faster-whisper
+    # via whisperx
+cuda-bindings==13.2.0
+    # via cuda-python
+cuda-pathfinder==1.5.4
+    # via cuda-bindings
+    # via cuda-python
+    # via cupy-cuda12x
+cuda-python==13.2.0
+    # via nvidia-cutlass-dsl-libs-base
+cupy-cuda12x==14.0.1
+    # via ray
+cycler==0.12.1
+    # via matplotlib
 dataclasses-json==0.6.7
     # via langchain-community
 datasets==4.0.0
@@ -106,46 +189,117 @@ deprecated==1.2.18
     # via pikepdf
 deprecation==2.1.0
     # via ocrmypdf
+depyf==0.20.0
+    # via vllm
 dill==0.3.8
     # via datasets
+    # via depyf
+    # via mineru
     # via multiprocess
 diskcache==5.6.3
     # via dspy
+    # via vllm
 distro==1.9.0
+    # via anthropic
     # via openai
+dnspython==2.8.0
+    # via email-validator
+docopt==0.6.2
+    # via pyannote-metrics
+    # via pyannote-pipeline
+docstring-parser==0.18.0
+    # via anthropic
 dspy==2.6.27
     # via dspy-ai
 dspy-ai==2.6.27
-    # via cite-extractor
+    # via citeagent
+    # via citeindex
 einops==0.8.1
+    # via flashinfer-python
     # via paddlex
+    # via pyannote-audio
+    # via vllm
+email-validator==2.3.0
+    # via fastapi
+    # via pydantic
 et-xmlfile==2.0.0
     # via openpyxl
 fake-http-header==0.3.5
     # via tf-playwright-stealth
 fake-useragent==2.2.0
     # via crawl4ai
+fast-langdetect==0.2.5
+    # via mineru
+fastapi==0.136.1
+    # via gradio
+    # via mineru
+    # via model-hosting-container-standards
+    # via vllm
+fastapi-cli==0.0.24
+    # via fastapi
+fastapi-cloud-cli==0.17.1
+    # via fastapi-cli
+fastar==0.11.0
+    # via fastapi
+    # via fastapi-cloud-cli
+faster-whisper==1.2.1
+    # via whisperx
 fasttext==0.9.3
-    # via cite-extractor
+    # via citeindex
+fasttext-predict==0.9.2.4
+    # via fast-langdetect
+fastuuid==0.14.0
+    # via litellm
+ffmpy==1.0.0
+    # via gradio
 filelock==3.18.0
     # via datasets
     # via huggingface-hub
+    # via modelscope
     # via paddlex
+    # via pyannote-pipeline
+    # via ray
+    # via torch
+    # via transformers
+    # via vllm
+flashinfer-python==0.5.2
+    # via vllm
+flatbuffers==25.12.19
+    # via onnxruntime
+fonttools==4.62.1
+    # via matplotlib
 frozenlist==1.7.0
     # via aiohttp
     # via aiosignal
 fsspec==2025.3.0
     # via datasets
+    # via gradio-client
     # via huggingface-hub
+    # via lightning
+    # via pytorch-lightning
+    # via torch
 ftfy==6.3.1
+    # via mineru
     # via paddlex
+gguf==0.18.0
+    # via vllm
 gputil==1.4.0
     # via paddlex
+gradio==6.8.0
+    # via gradio-pdf
+    # via mineru
+gradio-client==2.2.0
+    # via gradio
+gradio-pdf==0.0.24
+    # via mineru
 greenlet==3.2.3
     # via playwright
     # via sqlalchemy
+groovy==0.1.2
+    # via gradio
 h11==0.16.0
     # via httpcore
+    # via uvicorn
 h2==4.2.0
     # via httpx
 hf-xet==1.1.5
@@ -156,106 +310,223 @@ htmldate==1.9.3
     # via trafilatura
 httpcore==1.0.9
     # via httpx
+httptools==0.7.1
+    # via uvicorn
 httpx==0.28.1
+    # via anthropic
     # via crawl4ai
+    # via fastapi
+    # via fastapi-cloud-cli
+    # via gradio
+    # via gradio-client
+    # via httpx-retries
+    # via langgraph-sdk
     # via langsmith
     # via litellm
+    # via mcp
+    # via mineru
+    # via mineru-vl-utils
+    # via model-hosting-container-standards
     # via openai
     # via paddlepaddle
+    # via safehttpx
+httpx-retries==0.5.0
+    # via mineru-vl-utils
 httpx-sse==0.4.1
     # via langchain-community
+    # via mcp
 huggingface-hub==0.34.3
+    # via accelerate
     # via datasets
+    # via faster-whisper
+    # via gradio
+    # via gradio-client
+    # via mineru
     # via paddlex
+    # via pyannote-audio
+    # via speechbrain
     # via tokenizers
+    # via transformers
 humanize==4.12.3
     # via crawl4ai
 hyperframe==6.1.0
     # via h2
+hyperpyyaml==1.2.3
+    # via speechbrain
 idna==3.10
     # via anyio
+    # via email-validator
     # via httpx
     # via requests
     # via yarl
+imageio==2.37.3
+    # via scikit-image
 imagesize==1.4.1
     # via paddlex
 img2pdf==0.6.1
     # via ocrmypdf
-importlib-metadata==8.7.0
+importlib-metadata==8.5.0
     # via litellm
+interegular==0.3.3
+    # via lm-format-enforcer
 jinja2==3.1.6
+    # via fastapi
+    # via gradio
     # via litellm
     # via paddlex
+    # via torch
 jiter==0.10.0
+    # via anthropic
     # via openai
+jmespath==1.1.0
+    # via boto3
+    # via botocore
+    # via model-hosting-container-standards
 joblib==1.5.1
     # via dspy
     # via nltk
     # via scikit-learn
+    # via speechbrain
 json-repair==0.48.0
     # via dspy
+    # via mineru
 jsonpatch==1.33
     # via langchain-core
 jsonpointer==3.0.0
     # via jsonpatch
-jsonschema==4.25.0
+jsonschema==4.23.0
+    # via citeagent
+    # via citeindex
     # via litellm
+    # via mcp
+    # via mistral-common
+    # via ray
 jsonschema-specifications==2025.4.1
     # via jsonschema
+julius==0.2.7
+    # via torch-audiomentations
 justext==3.0.2
     # via trafilatura
-langchain==0.3.27
+kiwisolver==1.5.0
+    # via matplotlib
+langchain==1.2.17
+    # via paddlex
+langchain-classic==1.0.4
     # via langchain-community
+langchain-community==0.4.1
     # via paddlex
-langchain-community==0.3.27
-    # via paddlex
-langchain-core==0.3.72
+langchain-core==1.3.2
     # via langchain
+    # via langchain-classic
     # via langchain-community
     # via langchain-openai
     # via langchain-text-splitters
+    # via langgraph
+    # via langgraph-checkpoint
+    # via langgraph-prebuilt
     # via paddlex
-langchain-openai==0.3.28
+langchain-openai==1.1.10
     # via paddlex
-langchain-text-splitters==0.3.9
+langchain-protocol==0.0.14
+    # via langchain-core
+langchain-text-splitters==1.1.2
+    # via langchain-classic
+langgraph==1.1.10
     # via langchain
+langgraph-checkpoint==4.0.3
+    # via langgraph
+    # via langgraph-prebuilt
+langgraph-prebuilt==1.0.13
+    # via langgraph
+langgraph-sdk==0.3.6
+    # via langgraph
 langsmith==0.4.9
-    # via langchain
+    # via langchain-classic
     # via langchain-community
     # via langchain-core
 lark==1.2.2
     # via crawl4ai
-litellm==1.74.12
+    # via vllm
+lazy-loader==0.5
+    # via scikit-image
+lightning==2.6.1
+    # via pyannote-audio
+lightning-utilities==0.15.3
+    # via lightning
+    # via pytorch-lightning
+    # via torchmetrics
+litellm==1.83.14
+    # via citeagent
+    # via citeindex
     # via crawl4ai
     # via dspy
+llguidance==1.3.0
+    # via vllm
+llvmlite==0.44.0
+    # via numba
+lm-format-enforcer==0.11.3
+    # via vllm
+loguru==0.7.3
+    # via compressed-tensors
+    # via mineru
+    # via mineru-vl-utils
 lxml==5.4.0
-    # via cite-extractor
+    # via citeindex
     # via citeproc-py
     # via crawl4ai
     # via htmldate
     # via justext
     # via lxml-html-clean
+    # via mineru
     # via paddlex
     # via pikepdf
     # via premailer
+    # via pypptx-with-oxml
+    # via python-docx
+    # via readability-lxml
     # via trafilatura
 lxml-html-clean==0.4.2
     # via lxml
 magicattr==0.1.6
     # via dspy
+magika==1.0.2
+    # via mineru
 mako==1.3.10
     # via alembic
+mammoth==1.12.0
+    # via mineru
 markdown-it-py==3.0.0
     # via rich
 markupsafe==3.0.2
+    # via gradio
     # via jinja2
     # via mako
 marshmallow==3.26.1
     # via dataclasses-json
+matplotlib==3.10.9
+    # via pyannote-metrics
+mcp==1.27.0
+    # via citeagent
 mdurl==0.1.2
     # via markdown-it-py
+mineru==3.1.6
+    # via citeindex
+mineru-vl-utils==0.2.6
+    # via mineru
+mistral-common==1.11.1
+    # via vllm
+model-hosting-container-standards==0.1.14
+    # via vllm
+modelscope==1.36.3
+    # via mineru
 more-itertools==10.7.0
     # via cssutils
+mpmath==1.3.0
+    # via sympy
+msgpack==1.1.2
+    # via ray
+msgspec==0.21.1
+    # via vllm
 multidict==6.6.3
     # via aiohttp
     # via yarl
@@ -266,66 +537,210 @@ mypy-extensions==1.1.0
 networkx==3.5
     # via alphashape
     # via paddlepaddle
+    # via scikit-image
+    # via torch
+ninja==1.13.0
+    # via flashinfer-python
+    # via vllm
+    # via xgrammar
 nltk==3.9.1
     # via crawl4ai
-numpy==2.3.2
+    # via whisperx
+numba==0.61.2
+    # via vllm
+numpy==2.2.6
+    # via accelerate
+    # via albucore
+    # via albumentations
     # via alphashape
+    # via asteroid-filterbanks
+    # via contourpy
     # via crawl4ai
+    # via ctranslate2
+    # via cupy-cuda12x
     # via datasets
     # via dspy
     # via fasttext
+    # via flashinfer-python
+    # via gguf
+    # via gradio
+    # via imageio
     # via langchain-community
+    # via matplotlib
+    # via mineru
+    # via mistral-common
+    # via numba
+    # via nvidia-cutlass-dsl-libs-base
+    # via onnxruntime
     # via opencv-contrib-python
+    # via opencv-python
+    # via opencv-python-headless
     # via opt-einsum
     # via optuna
     # via paddlepaddle
     # via paddlex
     # via pandas
+    # via pyannote-core
+    # via pyannote-metrics
+    # via pytorch-metric-learning
     # via rank-bm25
+    # via scikit-image
     # via scikit-learn
     # via scipy
     # via shapely
+    # via soundfile
+    # via speechbrain
+    # via tensorboardx
+    # via tifffile
+    # via torchmetrics
+    # via torchvision
+    # via transformers
     # via trimesh
+    # via vllm
+    # via whisperx
+    # via xformers
+    # via xgrammar
+nvidia-cublas-cu12==12.8.4.1
+    # via nvidia-cudnn-cu12
+    # via nvidia-cusolver-cu12
+    # via torch
+nvidia-cuda-cupti-cu12==12.8.90
+    # via torch
+nvidia-cuda-nvrtc-cu12==12.8.93
+    # via torch
+nvidia-cuda-runtime-cu12==12.8.90
+    # via torch
+nvidia-cudnn-cu12==9.10.2.21
+    # via torch
+nvidia-cudnn-frontend==1.23.0
+    # via flashinfer-python
+nvidia-cufft-cu12==11.3.3.83
+    # via torch
+nvidia-cufile-cu12==1.13.1.3
+    # via torch
+nvidia-curand-cu12==10.3.9.90
+    # via torch
+nvidia-cusolver-cu12==11.7.3.90
+    # via torch
+nvidia-cusparse-cu12==12.5.8.93
+    # via nvidia-cusolver-cu12
+    # via torch
+nvidia-cusparselt-cu12==0.7.1
+    # via torch
+nvidia-cutlass-dsl==4.4.2
+    # via flashinfer-python
+nvidia-cutlass-dsl-libs-base==4.4.2
+    # via nvidia-cutlass-dsl
+nvidia-ml-py==13.595.45
+    # via flashinfer-python
+nvidia-nccl-cu12==2.27.5
+    # via torch
+nvidia-nvjitlink-cu12==12.8.93
+    # via nvidia-cufft-cu12
+    # via nvidia-cusolver-cu12
+    # via nvidia-cusparse-cu12
+    # via torch
+nvidia-nvshmem-cu12==3.3.20
+    # via torch
+nvidia-nvtx-cu12==12.8.90
+    # via torch
 ocrmypdf==16.10.4
-    # via cite-extractor
-openai==1.98.0
+    # via citeindex
+omegaconf==2.3.0
+    # via mineru
+    # via pyannote-audio
+onnxruntime==1.25.1
+    # via faster-whisper
+    # via magika
+    # via mineru
+    # via whisperx
+openai==2.24.0
     # via dspy
     # via langchain-openai
     # via litellm
+    # via mineru
     # via paddlex
+    # via vllm
+openai-harmony==0.0.8
+    # via vllm
 opencv-contrib-python==4.10.0.84
     # via paddlex
+opencv-python==4.13.0.92
+    # via mineru
+opencv-python-headless==4.13.0.92
+    # via albucore
+    # via albumentations
+    # via mistral-common
+    # via vllm
 openpyxl==3.1.5
+    # via mineru
     # via paddlex
 opt-einsum==3.3.0
     # via paddlepaddle
 optuna==4.4.0
     # via dspy
+    # via pyannote-pipeline
 orjson==3.11.1
+    # via gradio
+    # via langgraph-sdk
     # via langsmith
+ormsgpack==1.12.2
+    # via langgraph-checkpoint
+outlines-core==0.2.11
+    # via vllm
 packaging==25.0
+    # via accelerate
     # via datasets
     # via deprecation
+    # via flashinfer-python
+    # via gradio
+    # via gradio-client
     # via huggingface-hub
     # via langchain-core
     # via langsmith
+    # via lazy-loader
+    # via lightning
+    # via lightning-utilities
+    # via lm-format-enforcer
     # via marshmallow
+    # via matplotlib
+    # via modelscope
     # via ocrmypdf
+    # via onnxruntime
     # via optuna
     # via paddlex
     # via pikepdf
+    # via pytorch-lightning
+    # via qwen-vl-utils
+    # via ray
+    # via scikit-image
+    # via speechbrain
+    # via tensorboardx
+    # via torch-pitch-shift
+    # via torchmetrics
+    # via transformers
 paddleocr==3.1.0
-    # via cite-extractor
+    # via citeindex
 paddlepaddle==3.1.0
-    # via cite-extractor
+    # via citeindex
 paddlex==3.1.3
     # via paddleocr
-pandas==2.3.1
+pandas==2.3.3
     # via datasets
     # via dspy
+    # via gradio
+    # via mineru
     # via paddlex
-pdfminer-six==20250506
+    # via pyannote-database
+    # via pyannote-metrics
+    # via whisperx
+partial-json-parser==0.2.1.1.post7
+    # via vllm
+pdfminer-six==20260107
+    # via mineru
     # via ocrmypdf
+pdftext==0.6.3
+    # via mineru
 pi-heif==1.0.0
     # via ocrmypdf
 pikepdf==9.10.2
@@ -333,13 +748,26 @@ pikepdf==9.10.2
     # via ocrmypdf
 pillow==11.3.0
     # via crawl4ai
+    # via gradio
+    # via imageio
     # via img2pdf
+    # via matplotlib
+    # via mineru
+    # via mineru-vl-utils
+    # via mistral-common
     # via ocrmypdf
     # via paddlepaddle
     # via paddlex
     # via pi-heif
     # via pikepdf
+    # via pypptx-with-oxml
+    # via qwen-vl-utils
+    # via reportlab
+    # via scikit-image
+    # via torchvision
+    # via vllm
 playwright==1.54.0
+    # via citeindex
     # via crawl4ai
     # via tf-playwright-stealth
 pluggy==1.6.0
@@ -348,76 +776,198 @@ premailer==3.10.0
     # via paddlex
 prettytable==3.16.0
     # via paddlex
+primepy==1.3
+    # via torch-pitch-shift
+prometheus-client==0.25.0
+    # via prometheus-fastapi-instrumentator
+    # via vllm
+prometheus-fastapi-instrumentator==7.1.0
+    # via vllm
 propcache==0.3.2
     # via aiohttp
     # via yarl
 protobuf==6.31.1
+    # via onnxruntime
     # via paddlepaddle
+    # via ray
+    # via tensorboardx
+    # via vllm
 psutil==7.0.0
+    # via accelerate
     # via crawl4ai
+    # via vllm
 py-cpuinfo==9.0.0
     # via paddlex
+    # via vllm
+pyannote-audio==3.4.0
+    # via citeindex
+    # via whisperx
+pyannote-core==5.0.0
+    # via pyannote-audio
+    # via pyannote-database
+    # via pyannote-metrics
+    # via pyannote-pipeline
+pyannote-database==5.1.3
+    # via pyannote-audio
+    # via pyannote-metrics
+    # via pyannote-pipeline
+pyannote-metrics==3.2.1
+    # via pyannote-audio
+pyannote-pipeline==3.0.1
+    # via pyannote-audio
 pyarrow==21.0.0
     # via datasets
+pybase64==1.4.3
+    # via vllm
 pybind11==3.0.0
     # via fasttext
 pyclipper==1.3.0.post6
+    # via mineru
     # via paddlex
+pycountry==26.2.16
+    # via pydantic-extra-types
 pycparser==2.22
     # via cffi
-pydantic==2.11.7
+pydantic==2.12.5
+    # via albumentations
+    # via anthropic
+    # via compressed-tensors
     # via crawl4ai
     # via dspy
+    # via fastapi
+    # via fastapi-cloud-cli
+    # via gradio
     # via langchain
+    # via langchain-classic
     # via langchain-core
+    # via langgraph
     # via langsmith
     # via litellm
+    # via lm-format-enforcer
+    # via mcp
+    # via mineru-vl-utils
+    # via mistral-common
+    # via model-hosting-container-standards
     # via openai
+    # via openai-harmony
     # via paddlex
+    # via pdftext
+    # via pydantic-extra-types
     # via pydantic-settings
-pydantic-core==2.33.2
+    # via vllm
+    # via xgrammar
+pydantic-core==2.41.5
     # via pydantic
+pydantic-extra-types==2.11.1
+    # via fastapi
+    # via mistral-common
 pydantic-settings==2.10.1
+    # via fastapi
     # via langchain-community
+    # via mcp
+    # via pdftext
+pydub==0.25.1
+    # via gradio
 pyee==13.0.0
     # via playwright
 pygments==2.19.2
     # via rich
+pyjwt==2.12.1
+    # via mcp
+pylatexenc==2.10
+    # via mineru
 pymediainfo==7.0.1
-    # via cite-extractor
+    # via citeindex
 pymupdf==1.26.3
-    # via cite-extractor
+    # via citeindex
 pyopenssl==25.1.0
     # via crawl4ai
+pyparsing==3.3.2
+    # via matplotlib
+pypdf==6.10.2
+    # via mineru
+pypdf2==3.0.1
+    # via citeindex
 pypdfium2==4.30.0
+    # via mineru
     # via paddlex
+    # via pdftext
 pyperclip==1.9.0
     # via crawl4ai
 pypinyin==0.55.0
-    # via cite-extractor
+    # via citeindex
+pypptx-with-oxml==1.0.3
+    # via mineru
 python-dateutil==2.9.0.post0
-    # via cite-extractor
+    # via botocore
+    # via citeagent
+    # via citeindex
     # via dateparser
     # via htmldate
+    # via matplotlib
     # via pandas
-python-dotenv==1.1.1
+python-docx==1.2.0
+    # via mineru
+python-dotenv==1.2.2
+    # via citeagent
+    # via citeindex
     # via crawl4ai
     # via litellm
     # via pydantic-settings
+    # via uvicorn
+python-json-logger==4.1.0
+    # via vllm
+python-multipart==0.0.27
+    # via fastapi
+    # via gradio
+    # via mcp
+    # via mineru
+pytorch-lightning==2.6.1
+    # via lightning
+pytorch-metric-learning==2.9.0
+    # via pyannote-audio
 pytz==2025.2
     # via dateparser
+    # via gradio
     # via pandas
 pyyaml==6.0.2
+    # via accelerate
+    # via albumentations
+    # via citeagent
+    # via citeindex
+    # via ctranslate2
     # via datasets
+    # via gguf
+    # via gradio
     # via huggingface-hub
-    # via langchain
+    # via hyperpyyaml
+    # via langchain-classic
     # via langchain-community
     # via langchain-core
+    # via lightning
+    # via lm-format-enforcer
+    # via mineru
+    # via omegaconf
     # via optuna
     # via paddleocr
     # via paddlex
+    # via pyannote-database
+    # via pyannote-pipeline
+    # via pytorch-lightning
+    # via ray
+    # via transformers
+    # via uvicorn
+    # via vllm
+pyzmq==27.1.0
+    # via vllm
+qwen-vl-utils==0.0.14
+    # via mineru
 rank-bm25==0.2.2
     # via crawl4ai
+ray==2.55.1
+    # via vllm
+readability-lxml==0.8.4.1
+    # via citeindex
 referencing==0.36.2
     # via jsonschema
     # via jsonschema-specifications
@@ -427,111 +977,309 @@ regex==2025.7.34
     # via nltk
     # via paddlex
     # via tiktoken
-requests==2.32.4
-    # via cite-extractor
+    # via transformers
+    # via vllm
+reportlab==4.5.0
+    # via mineru
+requests==2.33.1
+    # via citeindex
     # via crawl4ai
     # via datasets
     # via dspy
+    # via fast-langdetect
+    # via flashinfer-python
+    # via gguf
     # via huggingface-hub
-    # via langchain
+    # via langchain-classic
     # via langchain-community
     # via langsmith
+    # via mineru
+    # via mistral-common
+    # via modelscope
     # via paddlex
     # via premailer
+    # via qwen-vl-utils
+    # via ray
     # via requests-toolbelt
+    # via robust-downloader
+    # via speechbrain
     # via tiktoken
+    # via transformers
+    # via vllm
 requests-toolbelt==1.0.0
     # via langsmith
 rich==14.1.0
     # via crawl4ai
     # via dspy
     # via ocrmypdf
+    # via pyannote-audio
+    # via rich-toolkit
+    # via typer
+rich-toolkit==0.19.7
+    # via fastapi-cli
+    # via fastapi-cloud-cli
+rignore==0.7.6
+    # via fastapi-cloud-cli
+robust-downloader==0.0.2
+    # via fast-langdetect
 rpds-py==0.26.0
     # via jsonschema
     # via referencing
 rtree==1.4.0
     # via alphashape
 ruamel-yaml==0.18.14
+    # via hyperpyyaml
     # via paddlex
 ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
+s3transfer==0.17.0
+    # via boto3
+safehttpx==0.1.7
+    # via gradio
+safetensors==0.7.0
+    # via accelerate
+    # via transformers
+scikit-image==0.26.0
+    # via mineru
 scikit-learn==1.7.1
     # via paddlex
+    # via pyannote-metrics
+    # via pyannote-pipeline
+    # via pytorch-metric-learning
 scipy==1.16.1
+    # via albumentations
     # via alphashape
+    # via pyannote-core
+    # via pyannote-metrics
+    # via scikit-image
     # via scikit-learn
+    # via speechbrain
+    # via vllm
+semantic-version==2.10.0
+    # via gradio
+semver==3.0.4
+    # via pyannote-audio
+sentencepiece==0.2.1
+    # via speechbrain
+    # via vllm
+sentry-sdk==2.58.0
+    # via fastapi-cloud-cli
+setproctitle==1.3.7
+    # via vllm
 setuptools==80.9.0
-    # via cite-extractor
+    # via citeagent
+    # via citeindex
+    # via ctranslate2
     # via fasttext
+    # via model-hosting-container-standards
+    # via modelscope
+    # via torch
+    # via vllm
 shapely==2.1.1
     # via alphashape
     # via crawl4ai
+    # via mineru
     # via paddlex
+shellingham==1.5.4
+    # via typer
+simsimd==6.5.16
+    # via albucore
 six==1.17.0
     # via python-dateutil
+    # via vllm
 sniffio==1.3.1
+    # via anthropic
     # via anyio
     # via openai
 snowballstemmer==2.2.0
     # via crawl4ai
+sortedcontainers==2.4.0
+    # via pyannote-core
+soundfile==0.13.1
+    # via pyannote-audio
+    # via speechbrain
 soupsieve==2.7
     # via beautifulsoup4
+speechbrain==1.1.0
+    # via pyannote-audio
 sqlalchemy==2.0.42
     # via alembic
-    # via langchain
+    # via langchain-classic
     # via langchain-community
     # via optuna
+sse-starlette==3.4.1
+    # via mcp
+starlette==0.52.1
+    # via fastapi
+    # via gradio
+    # via mcp
+    # via model-hosting-container-standards
+    # via prometheus-fastapi-instrumentator
+    # via sse-starlette
+stringzilla==4.6.0
+    # via albucore
+supervisor==4.3.0
+    # via model-hosting-container-standards
+sympy==1.14.0
+    # via pyannote-metrics
+    # via torch
+tabulate==0.10.0
+    # via flashinfer-python
+    # via pyannote-metrics
+tantivy==0.26.0
+    # via citeagent
 tenacity==9.1.2
     # via dspy
     # via langchain-community
     # via langchain-core
+tensorboardx==2.6.5
+    # via pyannote-audio
 tf-playwright-stealth==1.2.0
     # via crawl4ai
 threadpoolctl==3.6.0
     # via scikit-learn
-tiktoken==0.9.0
+tifffile==2026.4.11
+    # via scikit-image
+tiktoken==0.12.0
     # via langchain-openai
     # via litellm
+    # via mistral-common
     # via paddlex
+    # via vllm
 tld==0.13.1
     # via courlan
-tokenizers==0.21.4
+tokenizers==0.22.2
+    # via faster-whisper
     # via litellm
     # via paddlex
+    # via transformers
+    # via vllm
+tomlkit==0.13.3
+    # via gradio
+torch==2.9.0
+    # via accelerate
+    # via asteroid-filterbanks
+    # via compressed-tensors
+    # via flashinfer-python
+    # via julius
+    # via lightning
+    # via mineru
+    # via pyannote-audio
+    # via pytorch-lightning
+    # via pytorch-metric-learning
+    # via speechbrain
+    # via torch-audiomentations
+    # via torch-pitch-shift
+    # via torchaudio
+    # via torchmetrics
+    # via torchvision
+    # via vllm
+    # via whisperx
+    # via xformers
+    # via xgrammar
+torch-audiomentations==0.12.0
+    # via pyannote-audio
+torch-pitch-shift==1.2.5
+    # via torch-audiomentations
+torchaudio==2.9.0
+    # via pyannote-audio
+    # via speechbrain
+    # via torch-audiomentations
+    # via torch-pitch-shift
+    # via vllm
+    # via whisperx
+torchmetrics==1.9.0
+    # via lightning
+    # via pyannote-audio
+    # via pytorch-lightning
+torchvision==0.24.0
+    # via mineru
+    # via vllm
 tqdm==4.67.1
     # via datasets
     # via dspy
+    # via faster-whisper
+    # via flashinfer-python
+    # via gguf
     # via huggingface-hub
+    # via lightning
+    # via mineru
+    # via modelscope
     # via nltk
     # via openai
     # via optuna
+    # via pyannote-pipeline
+    # via pytorch-lightning
+    # via pytorch-metric-learning
+    # via robust-downloader
+    # via speechbrain
+    # via transformers
+    # via vllm
 trafilatura==2.0.0
-    # via cite-extractor
+    # via citeindex
+transformers==4.57.6
+    # via compressed-tensors
+    # via mineru
+    # via vllm
+    # via whisperx
+    # via xgrammar
 trimesh==4.7.1
     # via alphashape
+triton==3.5.0
+    # via torch
+    # via xgrammar
+typer==0.23.1
+    # via fastapi-cli
+    # via fastapi-cloud-cli
+    # via gradio
+    # via pyannote-database
 typing-extensions==4.14.1
     # via aiosignal
     # via aiosqlite
     # via alembic
+    # via anthropic
     # via anyio
+    # via apache-tvm-ffi
+    # via asteroid-filterbanks
     # via beautifulsoup4
+    # via fastapi
+    # via gradio
+    # via gradio-client
     # via huggingface-hub
     # via langchain-core
+    # via langchain-protocol
+    # via lightning
+    # via lightning-utilities
+    # via mcp
+    # via mistral-common
+    # via nvidia-cutlass-dsl-libs-base
     # via openai
     # via paddleocr
     # via paddlepaddle
     # via paddlex
+    # via pyannote-core
     # via pydantic
     # via pydantic-core
+    # via pydantic-extra-types
     # via pyee
     # via pyopenssl
+    # via pypptx-with-oxml
+    # via python-docx
+    # via pytorch-lightning
     # via referencing
+    # via rich-toolkit
     # via sqlalchemy
+    # via starlette
+    # via torch
     # via typing-inspect
     # via typing-inspection
+    # via vllm
+    # via xgrammar
 typing-inspect==0.9.0
     # via dataclasses-json
-typing-inspection==0.4.1
+typing-inspection==0.4.2
+    # via fastapi
+    # via mcp
     # via pydantic
     # via pydantic-settings
 tzdata==2025.2
@@ -542,23 +1290,53 @@ ujson==5.10.0
     # via dspy
     # via paddlex
 urllib3==2.5.0
-    # via cite-extractor
+    # via botocore
+    # via citeindex
     # via courlan
     # via htmldate
+    # via modelscope
     # via requests
+    # via sentry-sdk
     # via trafilatura
+uuid-utils==0.14.1
+    # via langchain-core
+uvicorn==0.46.0
+    # via fastapi
+    # via fastapi-cli
+    # via fastapi-cloud-cli
+    # via gradio
+    # via mcp
+    # via mineru
+uvloop==0.22.1
+    # via uvicorn
+vllm==0.11.2
+    # via mineru
+watchfiles==1.1.1
+    # via uvicorn
+    # via vllm
 wcwidth==0.2.13
     # via ftfy
     # via prettytable
+websockets==16.0
+    # via uvicorn
+whisperx==3.4.5
+    # via citeindex
 wrapt==1.17.2
     # via deprecated
+xformers==0.0.33.post1
+    # via vllm
+xgrammar==0.1.25
+    # via vllm
+xlsxwriter==3.2.9
+    # via pypptx-with-oxml
 xxhash==3.5.0
     # via crawl4ai
     # via datasets
+    # via langgraph
 yarl==1.20.1
     # via aiohttp
 yt-dlp==2025.7.21
-    # via cite-extractor
+    # via citeindex
 zipp==3.23.0
     # via importlib-metadata
 zstandard==0.23.0

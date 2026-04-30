@@ -100,7 +100,7 @@ export class CiteAgentBridge {
 
     this.transport = new StdioClientTransport({
       command: this.pythonCmd,
-      args: ["-m", "citeindex.mcp_server"],
+      args: ["-m", "citeagent.mcp_server"],
       env: {
         ...process.env,
         PYTHONPATH: this.projectDir,

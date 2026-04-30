@@ -180,25 +180,6 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
       },
     }),
 
-    cite_write_edge: tool({
-      description:
-        "Write an edge in the argument graph (support, contradict, relate) between two claims.",
-      args: {
-        source_claim_id: z.string().describe("Source claim ID"),
-        target_claim_id: z.string().describe("Target claim ID"),
-        edge_type: z
-          .string()
-          .describe("Edge type: support, contradict, relate"),
-      },
-      async execute({ source_claim_id, target_claim_id, edge_type }) {
-        return call("ag_write_edge", {
-          source_claim_id,
-          target_claim_id,
-          edge_type,
-        })
-      },
-    }),
-
     cite_delete_document: tool({
       description:
         "Delete a document and all its associated data from the corpus.",

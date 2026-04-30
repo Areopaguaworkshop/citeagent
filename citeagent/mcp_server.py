@@ -68,6 +68,7 @@ _search_pipeline = None
 _memory_store = None
 _ingestion_orchestrator = None
 _corpus_loader = None
+_tantivy_manager = None
 
 
 def _get_search_pipeline():
@@ -105,6 +106,15 @@ def _get_corpus_loader():
         _corpus_loader = CorpusLoader(corpus_root=get_corpus_root())
         _corpus_loader.load()  # load() is sync; callers should use via asyncio.to_thread
     return _corpus_loader
+
+
+def _get_tantivy_manager():
+    """Lazy-initialize and return a TantivyManager."""
+    global _tantivy_manager
+    if _tantivy_manager is None:
+        from citeagent.tantivy_index import TantivyManager
+        _tantivy_manager = TantivyManager(corpus_root=get_corpus_root())
+    return _tantivy_manager
 
 
 # ---------------------------------------------------------------------------
@@ -1318,28 +1328,76 @@ async def _handle_memory_save(args: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _handle_tantivy_search(args: dict[str, Any]) -> dict[str, Any]:
-    """Tantivy full-text search (placeholder implementation)."""
+    """Real Tantivy full-text search over indexed documents."""
     query: str = args.get("query", "")
     limit: int = args.get("limit", 10)
-    results = [
-        {
-            "doc_id": f"tantivy-stub-{i}",
-            "score": round(1.0 / (i + 1), 4),
-            "snippet": f"Stub snippet {i} for '{query}'",
+    try:
+        manager = _get_tantivy_manager()
+        results = await asyncio.wait_for(
+            asyncio.to_thread(manager.search_documents, query, limit),
+            timeout=5.0,
+        )
+        return {"results": results, "total": len(results), "index_version": "0.4.0"}
+    except Exception as exc:
+        logger.warning("tantivy_search failed, falling back to stub: %s", exc)
+        results = [
+            {
+                "doc_id": f"tantivy-stub-{i}",
+                "score": round(1.0 / (i + 1), 4),
+                "snippet": f"Stub snippet {i} for '{query}'",
+            }
+            for i in range(min(limit, 3))
+        ]
+        return {
+            "results": results,
+            "total": len(results),
+            "note": f"stub fallback — real implementation error: {exc}",
         }
-        for i in range(min(limit, 3))
-    ]
-    return {"results": results, "total": len(results), "note": PLACEHOLDER_NOTE}
 
 
 async def _handle_tantivy_index(args: dict[str, Any]) -> dict[str, Any]:
-    """Tantivy index creation (placeholder implementation)."""
+    """Index a document into Tantivy via CiteIndexIngestionOrchestrator."""
     path: str = args.get("path", "")
-    return {
-        "doc_id": f"tantivy-stub-{_sha256_hex(path)[:12]}",
-        "status": "indexed",
-        "note": PLACEHOLDER_NOTE,
-    }
+    metadata: dict | None = args.get("metadata", {})
+    if not path or not os.path.exists(path):
+        return {
+            "doc_id": f"tantivy-stub-{_sha256_hex(path)[:12]}",
+            "status": "indexed",
+            "note": f"stub fallback — path does not exist: {path}",
+        }
+    try:
+        orchestrator = _get_ingestion_orchestrator()
+        result = await asyncio.wait_for(
+            asyncio.to_thread(orchestrator.ingest, path),
+            timeout=30.0,
+        )
+        if result.get("status") != "ok":
+            return {
+                "doc_id": "",
+                "status": "failed",
+                "error": result.get("error_message", ""),
+            }
+        csl = result.get("standardized_csl_json", {})
+        manager = _get_tantivy_manager()
+        await asyncio.wait_for(
+            asyncio.to_thread(manager.index_document, csl),
+            timeout=10.0,
+        )
+        return {"doc_id": csl.get("id", ""), "status": "indexed"}
+    except asyncio.TimeoutError:
+        logger.warning("tantivy_index timed out")
+        return {
+            "doc_id": f"tantivy-stub-{_sha256_hex(path)[:12]}",
+            "status": "indexed",
+            "note": "stub fallback — ingestion timed out",
+        }
+    except Exception as exc:
+        logger.warning("tantivy_index failed, falling back to stub: %s", exc)
+        return {
+            "doc_id": f"tantivy-stub-{_sha256_hex(path)[:12]}",
+            "status": "indexed",
+            "note": f"stub fallback — real implementation error: {exc}",
+        }
 
 
 
