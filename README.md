@@ -44,11 +44,12 @@ Large Language Models write fluently but **cannot cite their sources**. When an 
 
 ## Current Status
 
-The live execution path runs on the v12 NDJSON agent runtime.
+The live execution path runs on the v12 NDJSON agent runtime, powered by the `citeagent` Python package and `citeindex` ingestion engine.
 
-- The runtime persists its working state under `corpus/.citeindex/`, including Tantivy indexes, structured document trees, session logs, copied source artifacts, and transcript artifacts.
-- Legacy `corpus/*/csl.json`, `document.json`, `merkle.json`, and `corpus/.memory/*.jsonl` are still supported as a compatibility source and are migrated into `corpus/.citeindex/` on startup.
-- After that one-time preparation, chat/search/tool execution uses the persistent v12 store rather than rescanning legacy files during each request.
+- **`citeagent`** (v0.4.0) — the research agent runtime: 7-stage search/chat pipeline, MCP server with 27 tools, Tantivy full-text indexes, integrity verification, memory, and agent orchestration.
+- **`citeindex`** (v0.12.0+) — the ingestion engine (separate PyPI package): PDF, URL, media, DJVU, Office document ingestion with GROBID, MinerU, DSPy, and Merkle verification.
+- The OpenCode plugin (`@ephremyuan/citeagent` v0.3.6 on npm) provides 5 specialized agents, skills, rules, and SafeHarness security hooks.
+- MCP server runs as `python3 -m citeagent.mcp_server` and works with Claude Code, Codex, Cursor, Cline, and Windsurf.
 
 ---
 
@@ -83,10 +84,13 @@ Query → BM25 Retrieval → Ranked Evidence → Generation (LLM or extractive)
 ### Installation
 
 ```bash
-# Python engine + CLI (required for all usage)
+# CiteAgent — research agent runtime + MCP server
+pip install citeagent
+
+# CiteIndex — ingestion engine (required for cite_ingest)
 uv tool install citeindex
 
-# OpenCode plugin (AI agent integration)
+# OpenCode plugin — agents, skills, hooks (recommended for OpenCode users)
 bunx @ephremyuan/citeagent@latest install
 ```
 
@@ -94,7 +98,7 @@ bunx @ephremyuan/citeagent@latest install
 
 ### Use with Claude Code, Codex, Cursor, and other MCP clients
 
-CiteAgent's Python backend (`citeindex.mcp_server`) is a **standard MCP server** that works with any MCP-compatible tool — not just OpenCode.
+CiteAgent's Python backend (`citeagent.mcp_server`) is a **standard MCP server** that works with any MCP-compatible tool — not just OpenCode.
 
 > **Full setup guide for all tools:** [mcp-setup.md](./mcp-setup.md)
 
@@ -106,7 +110,7 @@ Quick configs:
   "mcpServers": {
     "citeagent": {
       "command": "python3",
-      "args": ["-m", "citeindex.mcp_server"],
+      "args": ["-m", "citeagent.mcp_server"],
       "env": { "CITEAGENT_CORPUS_ROOT": "${PWD}/corpus" }
     }
   }
@@ -117,12 +121,12 @@ Quick configs:
 ```toml
 [mcp_servers.citeagent]
 command = "python3"
-args = ["-m", "citeindex.mcp_server"]
+args = ["-m", "citeagent.mcp_server"]
 env = { CITEAGENT_CORPUS_ROOT = "./corpus" }
 enabled = true
 ```
 
-**Cursor** (`.cursor/mcp.json`), **Cline**, **Windsurf** — same `python3 -m citeindex.mcp_server` pattern. See [mcp-setup.md](./mcp-setup.md) for exact file paths and formats.
+**Cursor** (`.cursor/mcp.json`), **Cline**, **Windsurf** — same `python3 -m citeagent.mcp_server` pattern. See [mcp-setup.md](./mcp-setup.md) for exact file paths and formats.
 
 ### System Dependencies
 
@@ -158,7 +162,7 @@ docker run -d -p 1969:1969 zotero/translation-server
 ### Ingest documents
 
 ```bash
-# Ingest a PDF into the corpus
+# Ingest a PDF into the corpus (uses citeindex CLI)
 citeindex ingest "research-paper.pdf"
 
 # Scanned PDF with auto-detected OCR language
@@ -178,36 +182,33 @@ citeindex ingest "https://www.nature.com/articles/s41586-023-06627-7"
 
 ```bash
 # BM25 deterministic search
-citeindex search "Kantian categorical imperative"
+citeagent search "Kantian categorical imperative"
 
 # Return more results
-citeindex search "machine learning fairness" --top-k 50
+citeagent search "machine learning fairness" --top-k 50
 ```
 
 ### Chat with trace-bound citations
 
 ```bash
 # Single-shot question
-citeindex chat --prompt "What does the author argue about social contract theory?"
+citeagent chat --prompt "What does the author argue about social contract theory?"
 
 # Interactive chat session
-citeindex chat
+citeagent chat
 
 # Specify LLM backend
-citeindex chat --llm ollama/qwen3 --prompt "Compare the two authors' positions on free will"
+citeagent chat --llm ollama/qwen3 --prompt "Compare the two authors' positions on free will"
 ```
 
-### Memory & plugins
+### Memory
 
 ```bash
 # Search past conversations
-citeindex memory search "social contract"
+citeagent memory search "social contract"
 
-# List installed plugins
-citeindex plugin list
-
-# Install a plugin
-citeindex plugin install ./my-plugin
+# List memory threads
+citeagent memory list
 ```
 
 ### First run and migration behavior
@@ -227,17 +228,47 @@ For new work, use normal ingest commands or the CLI. Do not add new documents ma
 The `@ephremyuan/citeagent` npm package is an **OpenCode-specific plugin** that adds:
 
 - **5 specialized agents** — researcher, verifier, explore-corpus, ingestor, reviewer
-- **25+ MCP tools** — `cite_search`, `cite_verify`, `cite_ingest`, `cite_render`, `cite_tree`, `cite_memory_*`, and more
+- **27 MCP tools** — `cite_search`, `cite_verify`, `cite_ingest`, `cite_render`, `cite_tree`, `cite_regex_search`, `cite_delete_document`, `cite_tantivy_search`, `cite_tantivy_index`, `cite_memory_*`, and more
 - **Skill & rule assets** auto-deployed on install
-- **Hooks** — SafeHarness, LTL monitor, verification ladder, crypto audit chain
+- **Hooks** — SafeHarness (sanitize + permission tiers), verification ladder (L0–L4), crypto audit chain
+
+### Install for OpenCode
 
 ```bash
 bunx @ephremyuan/citeagent@latest install
 ```
 
-> **Note:** The OpenCode plugin provides the richest experience (agents, skills, hooks). For other MCP clients (Claude Code, Codex, Cursor, Cline, Windsurf), add the MCP server directly — see the config snippets in [Installation](#installation).
+This auto-detects Python, checks for `citeagent` and `citeindex` packages, deploys agent configs, skills, and rules to `~/.config/opencode/`, and adds the plugin to your OpenCode config.
 
-See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.md) for full details.
+### Install for Claude Code
+
+Add to your project's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "citeagent": {
+      "command": "python3",
+      "args": ["-m", "citeagent.mcp_server"],
+      "env": { "CITEAGENT_CORPUS_ROOT": "${PWD}/corpus" }
+    }
+  }
+}
+```
+
+Or via CLI: `claude mcp add --transport stdio citeagent -- python3 -m citeagent.mcp_server`
+
+### Install for Codex CLI
+
+```bash
+codex mcp add citeagent -- python3 -m citeagent.mcp_server
+```
+
+### Install for Cursor, Cline, Windsurf
+
+See [mcp-setup.md](./mcp-setup.md) for exact config file paths and JSON formats.
+
+> The OpenCode plugin provides the richest experience (agents, skills, hooks). Other MCP clients connect directly to the Python server.
 
 ---
 
@@ -247,9 +278,10 @@ CiteAgent is a **Python + TypeScript** system with an **OpenCode plugin** layer:
 
 | Layer | Language | Role |
 |-------|----------|------|
-| **OpenCode Plugin** | TypeScript (npm) | MCP bridge, skill/rule deployment, agent configs |
-| **AI Engine & CLI** | Python | Agent adapters, ingestion pipelines, chat/search logic, OCR/document parsing, MCP server |
-| **Storage** | Files + indexes | Persistent v12 store under `corpus/.citeindex/`, with legacy `corpus/` compatibility import |
+| **OpenCode Plugin** | TypeScript (npm) | MCP bridge, skill/rule deployment, agent configs, SafeHarness security hooks |
+| **AI Engine & MCP Server** | Python (`citeagent`) | Agent adapters, chat/search logic, Tantivy indexes, integrity verification, MCP server |
+| **Ingestion Engine** | Python (`citeindex`) | PDF, URL, media ingestion, GROBID, MinerU, DSPy, Merkle verification |
+| **Storage** | Files + Tantivy indexes | Persistent store under `corpus/.citeindex/` with Tantivy full-text search |
 
 ### Key design rules
 
@@ -316,7 +348,7 @@ If you use CiteAgent in academic work, please cite:
   title = {CiteAgent: AI Research Agent with Merkle-Verified Retrieval and Citation-Indexed Search},
   year = {2025},
   url = {https://github.com/Areopaguaworkshop/citeagent},
-  note = {Python package: citeindex v0.11.0, npm package: @ephremyuan/citeagent v0.3.1}
+  note = {Python package: citeagent v0.4.0, citeindex v0.12.0, npm package: @ephremyuan/citeagent v0.3.6}
 }
 ```
 

@@ -1,6 +1,6 @@
 {
   "name": "@ephremyuan/citeagent",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -17,8 +17,8 @@
     "prepublishOnly": "bun run build:all"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "1.14.28",
-    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@opencode-ai/plugin": "1.14.30",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.23.0"
   },
   "keywords": [
