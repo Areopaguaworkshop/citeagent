@@ -4,7 +4,7 @@
 
 ## What CiteAgent Gives You
 
-Once connected, you get **25+ tools** for Merkle-verified academic research:
+Once connected, you get tools for Merkle-verified academic research:
 
 | Tool | What it does |
 |------|-------------|
@@ -17,40 +17,43 @@ Once connected, you get **25+ tools** for Merkle-verified academic research:
 | `cite_tree_traverse` | Traverse PageIndex tree to a given depth |
 | `cite_argument_query` | Query the argument graph (claims, contradictions) |
 | `cite_regex_search` | Regex-based search on document nodes |
+| `cite_index_claim` | Index a new claim in the argument graph |
+| `cite_delete_document` | Delete a document and associated data |
+| `cite_merkle_compute` | Compute Merkle tree hashes for a payload |
+| `cite_merkle_verify` | Verify a Merkle proof against a known root hash |
 | `cite_memory_save` | Save to persistent memory store |
 | `cite_search_memory` | Search the memory store |
 | `cite_memory_store_tier` | Store in a specific tier (working/episodic/long_term/corpus) |
 | `cite_memory_retrieve_tier` | Retrieve from a specific tier |
 | `cite_memory_consolidate` | Consolidate episodic → long-term |
-| `cite_memory_summarize` | Summarize memory entries |
-| `cite_index_claim` | Index a new claim in the argument graph |
-| `cite_write_edge` | Write an edge (support/contradict/relate) between claims |
-| `cite_delete_document` | Delete a document and associated data |
-| `cite_merkle_compute` | Compute Merkle tree hashes for a payload |
+| `cite_tantivy_index` | Index a document in Tantivy full-text search |
+| `cite_tantivy_search` | Search with Tantivy full-text engine |
 | `cite_audit_save` | Save an audit result (verdict + evidence hashes) |
 | `cite_audit_retrieve` | Retrieve a saved audit result |
 | `cite_crypto_sign` | Sign a message (HMAC-SHA256) |
 | `cite_crypto_verify` | Verify an HMAC-SHA256 signature |
 | `cite_crypto_audit_trail` | Return the audit chain for a session |
-| `cite_safeharness_check` | Run all 4 SafeHarness layers on a tool call |
+| `cite_safeharness_check` | Run SafeHarness security layers on a tool call |
 | `cite_safeharness_sanitize` | Sanitize input for a tool call |
-| `cite_safeharness_checkpoint` | Create a state checkpoint before a write |
-| `cite_safeharness_rollback` | Rollback from a checkpoint |
-| `cite_safeharness_status` | Get current SafeHarness security status |
-| `cite_tantivy_index` | Low-level: add file to Tantivy index |
-| `cite_tantivy_search` | Low-level: Tantivy search |
 
 ## Prerequisites
 
-Before adding the MCP server, install the Python package:
+Install both packages:
 
 ```bash
+# CiteAgent (research agent runtime + MCP server)
+pip install citeagent
+
+# CiteIndex (ingestion engine, required for cite_ingest)
+pip install citeindex
+# or for global CLI:
 uv tool install citeindex
 ```
 
-Verify it works:
+Verify:
 
 ```bash
+python3 -c "import citeagent"
 citeindex --version
 ```
 
@@ -84,7 +87,7 @@ Create `.mcp.json` at your project root:
   "mcpServers": {
     "citeagent": {
       "command": "python3",
-      "args": ["-m", "citeindex.mcp_server"],
+      "args": ["-m", "citeagent.mcp_server"],
       "env": {
         "CITEAGENT_CORPUS_ROOT": "${PWD}/corpus"
       }
@@ -96,13 +99,13 @@ Create `.mcp.json` at your project root:
 **Option B: CLI command**
 
 ```bash
-claude mcp add --transport stdio citeagent -- python3 -m citeindex.mcp_server
+claude mcp add --transport stdio citeagent -- python3 -m citeagent.mcp_server
 ```
 
 **Option C: User-scoped** (available in all projects)
 
 ```bash
-claude mcp add --transport stdio --scope user citeagent -- python3 -m citeindex.mcp_server
+claude mcp add --transport stdio --scope user citeagent -- python3 -m citeagent.mcp_server
 ```
 
 With environment variables:
@@ -110,7 +113,7 @@ With environment variables:
 ```bash
 claude mcp add --transport stdio --scope user \
   --env CITEAGENT_CORPUS_ROOT=/path/to/corpus \
-  citeagent -- python3 -m citeindex.mcp_server
+  citeagent -- python3 -m citeagent.mcp_server
 ```
 
 ### Codex CLI
@@ -120,17 +123,17 @@ Edit `~/.codex/config.toml` (user-scoped, all projects):
 ```toml
 [mcp_servers.citeagent]
 command = "python3"
-args = ["-m", "citeindex.mcp_server"]
+args = ["-m", "citeagent.mcp_server"]
 env = { CITEAGENT_CORPUS_ROOT = "./corpus" }
 enabled = true
 ```
 
-Or per-project in `.codex/config.toml` (trusted projects only).
+Or per-project in `.codex/config.toml`.
 
 Or via CLI:
 
 ```bash
-codex mcp add citeagent -- python3 -m citeindex.mcp_server
+codex mcp add citeagent -- python3 -m citeagent.mcp_server
 ```
 
 ### Cursor
@@ -142,7 +145,7 @@ Create `.cursor/mcp.json` at your project root:
   "mcpServers": {
     "citeagent": {
       "command": "python3",
-      "args": ["-m", "citeindex.mcp_server"],
+      "args": ["-m", "citeagent.mcp_server"],
       "env": {
         "CITEAGENT_CORPUS_ROOT": "${workspaceFolder}/corpus"
       }
@@ -166,7 +169,7 @@ Edit `cline_mcp_settings.json`:
   "mcpServers": {
     "citeagent": {
       "command": "python3",
-      "args": ["-m", "citeindex.mcp_server"],
+      "args": ["-m", "citeagent.mcp_server"],
       "env": {
         "CITEAGENT_CORPUS_ROOT": "./corpus"
       },
@@ -185,7 +188,7 @@ Edit `~/.codeium/windsurf/mcp_config.json`:
   "mcpServers": {
     "citeagent": {
       "command": "python3",
-      "args": ["-m", "citeindex.mcp_server"],
+      "args": ["-m", "citeagent.mcp_server"],
       "env": {
         "CITEAGENT_CORPUS_ROOT": "${env:PWD}/corpus"
       }
@@ -230,14 +233,14 @@ Use cite_ingest to ingest "path/to/paper.pdf"
 
 ## Custom Python Path
 
-If your Python with `citeindex` installed is not the default `python3`, set `CITEAGENT_PYTHON`:
+If your Python with `citeagent` installed is not the default `python3`, set `CITEAGENT_PYTHON`:
 
 ```json
 {
   "mcpServers": {
     "citeagent": {
       "command": "/path/to/your/python3",
-      "args": ["-m", "citeindex.mcp_server"],
+      "args": ["-m", "citeagent.mcp_server"],
       "env": {
         "CITEAGENT_CORPUS_ROOT": "./corpus"
       }
@@ -252,8 +255,9 @@ Priority: `CITEAGENT_PYTHON` env → project `.venv/bin/python3` → `~/.rye/py/
 
 | Problem | Cause | Fix |
 |---------|-------|-----|
-| `Connection error (-32000)` | Python process crashed or `citeindex` not installed | Run `python3 -c "import citeindex"` to verify |
-| `No module named citeindex.mcp_server` | Old version of citeindex | `uv tool upgrade citeindex` |
+| `Connection error (-32000)` | Python process crashed or `citeagent` not installed | Run `python3 -c "import citeagent"` to verify |
+| `No module named citeagent.mcp_server` | Old version or wrong package | `pip install --upgrade citeagent` |
+| `cite_ingest` fails | `citeindex` not installed (separate ingestion package) | `pip install citeindex` or `uv tool install citeindex` |
 | `tesseract not found` | OCR not installed | `sudo apt install tesseract-ocr` or `brew install tesseract` |
 | Tools don't appear | MCP server not started or config path wrong | Restart the tool; check config file path |
 | `CITEAGENT_CORPUS_ROOT` errors | Corpus directory doesn't exist | Create it: `mkdir -p corpus` |
