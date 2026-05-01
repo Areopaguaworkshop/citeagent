@@ -25,12 +25,9 @@ The installer automatically:
 ## Prerequisites
 
 ```bash
-# Required: Python + citeindex (via uv tool — isolated, no venv needed)
-uv tool install citeagent
+# Optional: citeindex CLI for document ingestion (PDF, URL, media)
+# If not installed, cite_ingest/cite_tantivy_index will warn but other tools work fine
 uv tool install citeindex
-
-# Verify
-python3 -c "import citeagent" && citeindex --version
 
 # Optional: OCR support
 sudo apt install tesseract-ocr
@@ -38,6 +35,8 @@ sudo apt install tesseract-ocr
 # Optional: LLM backend (for chat/generation)
 # https://ollama.ai
 ```
+
+> No Python runtime required — all citation tools run natively in TypeScript.
 
 ## Uninstall
 
@@ -57,7 +56,7 @@ sudo apt install tesseract-ocr
 
 ## Tools
 
-The plugin provides 25+ tools via MCP bridge to the Python backend:
+The plugin provides 25+ tools via the native TypeScript CiteAgentEngine:
 
 - `cite_search` — BM25 full-text search
 - `cite_verify` — Merkle proof verification
@@ -76,15 +75,15 @@ User question
      ▼
 citeagent-researcher (OpenCode agent)
      │
-     ├── cite_search ──→ Retrieval agent (Python/MCP)
-     ├── cite_verify ──→ Integrity agent (Python/MCP)
-     ├── cite_ingest ──→ Ingestion agent (Python/MCP)
+     ├── cite_search ──→ CiteAgentEngine (TypeScript, in-process)
+     ├── cite_verify ──→ CiteAgentEngine
+     ├── cite_ingest ──→ citeindex CLI (optional sidecar)
      │
      ├── @citeagent-explore-corpus (OpenCode subagent)
      └── @citeagent-verifier (OpenCode subagent)
 ```
 
-The plugin spawns `python3 -m citeagent.mcp_server` as a subprocess and communicates via MCP over stdio. The OpenCode plugin auto-detects the Python runtime from `uv tool install` paths.
+All tools except `cite_ingest`/`cite_tantivy_index` run natively in TypeScript — no Python subprocess or MCP stdio bridge required. The engine reads the on-disk corpus directly and implements BM25 search (MiniSearch), Merkle verification, CSL rendering, memory store, and audit trail in-process.
 
 ## License
 

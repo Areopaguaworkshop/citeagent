@@ -32,17 +32,16 @@ CiteAgent provides 5 purpose-built agents for OpenCode:
 
 ### Prerequisites
 
-- **Python 3.12+**
+- **citeindex CLI** (optional — needed only for `cite_ingest`/`cite_tantivy_index`)
 - **System dependencies:** `tesseract` (OCR), `ffmpeg` (media), `ollama` (local LLM)
 
-### 1. Install Python packages
+### 1. Install citeindex (optional)
 
 ```bash
-uv tool install citeagent
 uv tool install citeindex
 ```
 
-> **`uv tool install`** provides isolated, globally-available CLI tools without polluting your system Python. No venv needed — `uv` manages its own environments under `~/.local/share/uv/tools/`.
+> Only needed if you want to ingest new documents. All other tools (search, verify, render, memory, etc.) run natively in TypeScript — no Python required.
 
 ### 2. Install system dependencies
 
@@ -85,6 +84,8 @@ export OPENAI_API_KEY="sk-..."
 bunx @ephremyuan/citeagent@latest install
 ```
 
+> The plugin runs natively in TypeScript — no Python or MCP subprocess bridge required.
+
 ### 5. Configure other MCP clients
 
 For Claude Code, Codex, Cursor, Cline, and Windsurf — see [**mcp-setup.md**](./mcp-setup.md).
@@ -92,7 +93,11 @@ For Claude Code, Codex, Cursor, Cline, and Windsurf — see [**mcp-setup.md**](.
 ### 6. Verify installation
 
 ```bash
-python3 -c "import citeagent" && citeagent --version && citeindex --version
+# Plugin tools work natively — just check the plugin loaded:
+bunx @ephremyuan/citeagent@latest install --dry-run
+
+# If you installed citeindex (optional):
+citeindex --version
 ```
 
 ---
@@ -111,14 +116,13 @@ Ask the user which backend they want:
 
 Configure based on their choice.
 
-### Step 1 — Install packages
+### Step 1 — Install citeindex (optional)
 
 ```bash
-uv tool install citeagent
 uv tool install citeindex
 ```
 
-> `uv tool install` creates isolated environments under `~/.local/share/uv/tools/` — no venv or system Python pollution.
+> Only needed for document ingestion. All other tools run natively in TypeScript — no Python required.
 
 ### Step 2 — Install system dependencies
 
@@ -170,7 +174,8 @@ For Claude Code, Codex, Cursor, Cline, or Windsurf configurations, refer the use
 Confirm everything works:
 
 ```bash
-python3 -c "import citeagent" && citeagent --version && citeindex --version
+bunx @ephremyuan/citeagent@latest install --dry-run
+citeindex --version  # optional, only if installed
 ```
 
-If both succeed, CiteAgent is installed and ready.
+If the plugin install succeeds, CiteAgent is ready.
