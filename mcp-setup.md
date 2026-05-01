@@ -1,46 +1,46 @@
 # CiteAgent MCP Setup Guide
 
-> **For AI agents (Claude Code, Codex, Cursor, Cline, Windsurf, etc.):** This document tells you how to install and connect CiteAgent so you can use its citation-verified research tools.
+> **No Python required.** CiteAgent's MCP server runs natively in TypeScript via `bunx`. All tools execute in-process — only `cite_ingest` (document ingestion) optionally shells out to the `citeindex` CLI.
 
 ## What CiteAgent Gives You
 
 Once connected, you get tools for Merkle-verified academic research plus built-in web search and code search:
 
-### CiteAgent Tools (Python backend)
+### CiteAgent Tools (TypeScript-native MCP server)
 
 | Tool | What it does |
 |------|-------------|
-| `cite_search` | BM25 full-text search on your academic corpus |
-| `cite_search_claims` | Search claims in the argument graph |
-| `cite_verify` | Verify Merkle proof for an evidence node |
-| `cite_render` | Render CSL citation to formatted bibliography (Chicago, APA, MLA…) |
-| `cite_ingest` | Ingest a document (PDF, URL, media) into the corpus |
-| `cite_tree` | Load PageIndex tree for a document |
-| `cite_tree_traverse` | Traverse PageIndex tree to a given depth |
-| `cite_argument_query` | Query the argument graph (claims, contradictions) |
-| `cite_regex_search` | Regex-based search on document nodes |
-| `cite_index_claim` | Index a new claim in the argument graph |
-| `cite_delete_document` | Delete a document and associated data |
-| `cite_merkle_compute` | Compute Merkle tree hashes for a payload |
-| `cite_merkle_verify` | Verify a Merkle proof against a known root hash |
-| `cite_memory_save` | Save to persistent memory store |
-| `cite_search_memory` | Search the memory store |
-| `cite_memory_store_tier` | Store in a specific tier (working/episodic/long_term/corpus) |
-| `cite_memory_retrieve_tier` | Retrieve from a specific tier |
-| `cite_memory_consolidate` | Consolidate episodic → long-term |
-| `cite_tantivy_index` | Index a document in Tantivy full-text search |
-| `cite_tantivy_search` | Search with Tantivy full-text engine |
-| `cite_audit_save` | Save an audit result (verdict + evidence hashes) |
-| `cite_audit_retrieve` | Retrieve a saved audit result |
-| `cite_crypto_sign` | Sign a message (HMAC-SHA256) |
-| `cite_crypto_verify` | Verify an HMAC-SHA256 signature |
-| `cite_crypto_audit_trail` | Return the audit chain for a session |
-| `cite_safeharness_check` | Run SafeHarness security layers on a tool call |
-| `cite_safeharness_sanitize` | Sanitize input for a tool call |
+| `search_documents` | BM25 full-text search on your academic corpus |
+| `search_claims` | Search claims in the argument graph |
+| `search_memory` | Search persisted memory entries |
+| `index_document` | Ingest a document (PDF, URL, media) into the corpus |
+| `index_claim` | Index a claim extracted from a document |
+| `delete_document` | Delete a document and associated data |
+| `ag_query_claims` | Query claims from the argument graph |
+| `ag_query_contradictions` | Find contradictions in the argument graph |
+| `merkle_compute` | Compute Merkle tree hashes for a payload |
+| `merkle_verify` | Verify a Merkle proof against a known root hash |
+| `csl_render` | Render CSL citation to formatted bibliography (Chicago, APA, MLA…) |
+| `tree_load` | Load PageIndex tree for a document |
+| `tree_traverse` | Traverse PageIndex tree to a given depth |
+| `regex_search` | Regex-based search on document nodes |
+| `memory_save` | Save to persistent memory store |
+| `memory_store_tier` | Store in a specific tier (working/episodic/long_term/corpus) |
+| `memory_retrieve_tier` | Retrieve from a specific tier |
+| `memory_consolidate` | Consolidate episodic → long-term |
+| `tantivy_search` | Full-text search (uses BM25 engine) |
+| `tantivy_index` | Index a document in full-text search |
+| `audit_save` | Save an audit result (verdict + evidence hashes) |
+| `audit_retrieve` | Retrieve a saved audit result |
+| `crypto_sign` | Sign a message (HMAC-SHA256) |
+| `crypto_verify` | Verify an HMAC-SHA256 signature |
+| `crypto_audit_trail` | Return the audit chain for a session |
+| `safeharness_check` | Run SafeHarness security layers on a tool call |
+| `safeharness_sanitize` | Sanitize input for a tool call |
 
 ### Built-in MCP Servers (OpenCode plugin only)
 
-When using the OpenCode plugin, these are auto-connected alongside the Python backend:
+When using the OpenCode plugin, these are auto-connected alongside CiteAgent:
 
 | Server | Tool | What it does | Auth |
 |--------|------|-------------|------|
@@ -48,67 +48,59 @@ When using the OpenCode plugin, these are auto-connected alongside the Python ba
 | **context7** | `resolve-library-id` | Library/package documentation lookup | Optional `CONTEXT7_API_KEY` |
 | **grep_app** | `search_code` | Search code across open-source GitHub repos | None |
 
-> **Note:** In non-OpenCode MCP clients (Claude Code, Codex, etc.), you need to add these MCP servers separately if desired. The OpenCode plugin auto-connects them.
+> **Note:** For non-OpenCode MCP clients, add these MCP servers separately if desired.
 
-To disable any built-in MCP server, add it to the `disabled_mcps` array in `~/.config/opencode/citeagent.json`:
-
-```json
-{
-  "disabled_mcps": ["websearch", "context7"]
-}
+---
 
 ## Prerequisites
 
-Install both packages via `uv tool`:
+### Required (TypeScript-native — no Python)
 
 ```bash
-# CiteAgent (research agent runtime + MCP server)
-uv tool install citeagent
+# Install Bun (if not already installed)
+curl -fsSL https://bun.sh/install | bash
 
-# CiteIndex (ingestion engine, required for cite_ingest)
+# Install the CiteAgent plugin (includes MCP server)
+bunx @ephremyuan/citeagent@latest install
+```
+
+### Optional — for document ingestion only
+
+```bash
+# citeindex CLI (needed only for cite_ingest / cite_tantivy_index)
 uv tool install citeindex
 ```
 
-> **`uv tool install`** provides isolated, globally-available CLI tools without polluting your system Python. No venv or `pip install` needed.
+> **All other tools run natively in TypeScript.** No Python subprocess, no MCP stdio bridge to Python. The engine reads the on-disk corpus directly.
 
-Verify:
-
-```bash
-python3 -c "import citeagent"
-citeindex --version
-```
-
-System dependencies (optional but recommended):
+### Optional services
 
 ```bash
-# Ubuntu/Debian
-sudo apt-get install tesseract-ocr mediainfo ffmpeg
+# OCR support (for scanned PDFs via citeindex)
+sudo apt install tesseract-ocr        # Ubuntu/Debian
+brew install tesseract                # macOS
 
-# macOS
-brew install tesseract mediainfo ffmpeg
-```
-
-LLM backend for chat/generation (optional):
-
-```bash
+# LLM backend (for chat/generation)
 curl -fsSL https://ollama.ai/install.sh | sh
 ollama pull qwen3
 ```
 
+---
+
 ## Add to Your Tool
 
-### Claude Code
+### Recommended: TypeScript-native MCP server (all clients)
 
-**Option A: Project-scoped** (recommended — shareable via VCS)
+The `bunx @ephremyuan/citeagent mcp-server` command starts a standard MCP stdio server. Works with **any** MCP-compatible tool.
 
-Create `.mcp.json` at your project root:
+**Claude Code** (`.mcp.json` at repo root):
 
 ```json
 {
   "mcpServers": {
     "citeagent": {
-      "command": "python3",
-      "args": ["-m", "citeagent.mcp_server"],
+      "command": "bunx",
+      "args": ["@ephremyuan/citeagent", "mcp-server"],
       "env": {
         "CITEAGENT_CORPUS_ROOT": "${PWD}/corpus"
       }
@@ -117,56 +109,30 @@ Create `.mcp.json` at your project root:
 }
 ```
 
-**Option B: CLI command**
+Or via CLI:
 
 ```bash
-claude mcp add --transport stdio citeagent -- python3 -m citeagent.mcp_server
+claude mcp add --transport stdio citeagent -- bunx @ephremyuan/citeagent mcp-server
 ```
 
-**Option C: User-scoped** (available in all projects)
-
-```bash
-claude mcp add --transport stdio --scope user citeagent -- python3 -m citeagent.mcp_server
-```
-
-With environment variables:
-
-```bash
-claude mcp add --transport stdio --scope user \
-  --env CITEAGENT_CORPUS_ROOT=/path/to/corpus \
-  citeagent -- python3 -m citeagent.mcp_server
-```
-
-### Codex CLI
-
-Edit `~/.codex/config.toml` (user-scoped, all projects):
+**Codex CLI** (`~/.codex/config.toml`):
 
 ```toml
 [mcp_servers.citeagent]
-command = "python3"
-args = ["-m", "citeagent.mcp_server"]
+command = "bunx"
+args = ["@ephremyuan/citeagent", "mcp-server"]
 env = { CITEAGENT_CORPUS_ROOT = "./corpus" }
 enabled = true
 ```
 
-Or per-project in `.codex/config.toml`.
-
-Or via CLI:
-
-```bash
-codex mcp add citeagent -- python3 -m citeagent.mcp_server
-```
-
-### Cursor
-
-Create `.cursor/mcp.json` at your project root:
+**Cursor** (`.cursor/mcp.json` at repo root):
 
 ```json
 {
   "mcpServers": {
     "citeagent": {
-      "command": "python3",
-      "args": ["-m", "citeagent.mcp_server"],
+      "command": "bunx",
+      "args": ["@ephremyuan/citeagent", "mcp-server"],
       "env": {
         "CITEAGENT_CORPUS_ROOT": "${workspaceFolder}/corpus"
       }
@@ -175,22 +141,14 @@ Create `.cursor/mcp.json` at your project root:
 }
 ```
 
-Or global: `~/.cursor/mcp.json` (same format).
-
-### Cline (VS Code Extension)
-
-Edit `cline_mcp_settings.json`:
-
-- **macOS:** `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
-- **Linux:** `~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
-- **Windows:** `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json`
+**Cline** (VS Code Extension — `cline_mcp_settings.json`):
 
 ```json
 {
   "mcpServers": {
     "citeagent": {
-      "command": "python3",
-      "args": ["-m", "citeagent.mcp_server"],
+      "command": "bunx",
+      "args": ["@ephremyuan/citeagent", "mcp-server"],
       "env": {
         "CITEAGENT_CORPUS_ROOT": "./corpus"
       },
@@ -200,16 +158,14 @@ Edit `cline_mcp_settings.json`:
 }
 ```
 
-### Windsurf (Codeium)
-
-Edit `~/.codeium/windsurf/mcp_config.json`:
+**Windsurf** (`~/.codeium/windsurf/mcp_config.json`):
 
 ```json
 {
   "mcpServers": {
     "citeagent": {
-      "command": "python3",
-      "args": ["-m", "citeagent.mcp_server"],
+      "command": "bunx",
+      "args": ["@ephremyuan/citeagent", "mcp-server"],
       "env": {
         "CITEAGENT_CORPUS_ROOT": "${env:PWD}/corpus"
       }
@@ -218,17 +174,17 @@ Edit `~/.codeium/windsurf/mcp_config.json`:
 }
 ```
 
-> **Note:** Windsurf uses `${env:VAR}` for environment variable interpolation.
-
-### OpenCode (full plugin — agents + skills + hooks)
+**OpenCode** (full plugin — agents + skills + hooks + MCP):
 
 ```bash
 bunx @ephremyuan/citeagent@latest install
 ```
 
-This deploys the plugin plus skills, agent configs, rules, and model mappings. See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.md).
+This deploys the plugin plus skills, agent configs, rules, and model mappings. The plugin uses the same TypeScript-native `CiteAgentEngine` internally — no subprocess.
 
-## Verify the Connection
+---
+
+## Custom Corpus Root
 
 After adding the MCP server, restart your tool and check that CiteAgent tools appear:
 
@@ -243,42 +199,47 @@ codex mcp list
 Quick smoke test — ask your AI agent:
 
 ```
-Use cite_search to search for "test" with limit 1
+Use search_documents to search for "test" with limit 1
 ```
 
 If connected, it should return results (or "no documents indexed" if the corpus is empty). Then ingest your first document:
 
 ```
-Use cite_ingest to ingest "path/to/paper.pdf"
+Use index_document to ingest "path/to/paper.pdf"
 ```
 
-## Custom Python Path
+> **Note:** `index_document` requires the `citeindex` CLI (`uv tool install citeindex`). All other tools work without it.
 
-If your Python with `citeagent` installed is not the default `python3`, set `CITEAGENT_PYTHON`:
+---
+
+## Custom Corpus Root
+
+The `CITEAGENT_CORPUS_ROOT` environment variable controls where CiteAgent looks for your corpus. Defaults to `./corpus` relative to the working directory.
+
+If you need a custom path:
 
 ```json
 {
   "mcpServers": {
     "citeagent": {
-      "command": "/path/to/your/python3",
-      "args": ["-m", "citeagent.mcp_server"],
+      "command": "bunx",
+      "args": ["@ephremyuan/citeagent", "mcp-server"],
       "env": {
-        "CITEAGENT_CORPUS_ROOT": "./corpus"
+        "CITEAGENT_CORPUS_ROOT": "/absolute/path/to/your/corpus"
       }
     }
   }
 }
 ```
 
-Priority: `CITEAGENT_PYTHON` env → project `.venv/bin/python3` → `~/.rye/py/` → `~/.local/share/uv/python/` → system `python3`.
+---
 
 ## Troubleshooting
 
 | Problem | Cause | Fix |
 |---------|-------|-----|
-| `Connection error (-32000)` | Python process crashed or `citeagent` not installed | Run `python3 -c "import citeagent"` to verify |
-| `No module named citeagent.mcp_server` | Old version or wrong package | `uv tool install --force citeagent` |
-| `cite_ingest` fails | `citeindex` not installed (separate ingestion package) | `uv tool install citeindex` |
-| `tesseract not found` | OCR not installed | `sudo apt install tesseract-ocr` or `brew install tesseract` |
+| `bun: command not found` | Bun not installed | `curl -fsSL https://bun.sh/install \| bash` |
+| `@ephremyuan/citeagent not found` | Package not downloaded yet | `bunx @ephremyuan/citeagent@latest mcp-server` will auto-download |
+| `index_document` fails | `citeindex` not installed (separate ingestion CLI) | `uv tool install citeindex` |
 | Tools don't appear | MCP server not started or config path wrong | Restart the tool; check config file path |
-| `CITEAGENT_CORPUS_ROOT` errors | Corpus directory doesn't exist | Create it: `mkdir -p corpus` |
+| `CITEAGENT_CORPUS_ROOT` errors | Corpus directory doesn't exist | `mkdir -p corpus` |

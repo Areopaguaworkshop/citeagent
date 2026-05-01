@@ -1,672 +1,413 @@
-# CiteIndex Project Report
+# CiteAgent Project Report
 
-> "AI research knowledge infrastructure with citation indexing and Merkle-verified retrieval."
-> — `pyproject.toml`, v0.11.0
+> **Version**: 0.3.9 (npm plugin, TS-native engine) | **Date**: 2026-05-01
+> **Status**: Active development — Python removed; TypeScript-native engine is now the sole runtime. Ingestion delegated to `citeindex` CLI sidecar.
 
 ---
 
-## 1. Project Overview
+## 1. What CiteAgent Is
 
-CiteIndex is a **hybrid Rust + Python** academic research system whose defining promise is: *every claim is traced, verified, and cited — no hallucinations*. It ingests documents (PDF, URL, media, DJVU, Office), extracts structured citation metadata, builds Merkle-verified text node trees, indexes them with deterministic BM25 (no embeddings), and answers research queries with SHA-256–anchored evidence chains.
+CiteAgent is an **AI research agent for academic scholars** that enforces a strict contract: **no claim without evidence, no evidence without a hash, no hash without a Merkle proof.** It ingests research documents, indexes them into a Merkle-verified knowledge base, and answers queries with deterministic, trace-bound citations mapped to specific text passages verified by cryptographic hash.
 
-| Aspect | Detail |
-|--------|--------|
-| **Version** | 0.11.0 |
-| **Author** | ajia \<yyjfwoaini@gmail.com\> |
-| **License** | MIT |
-| **Python** | ≥ 3.12 |
-| **Entry point** | `citeindex = citeindex.cli:main` |
-| **Build system** | hatchling 1.26.3 |
+Think of it as "Claude Code for academic scholarship" — instead of writing code, it reads your research materials and provides citation-grounded answers.
+
+**Runs entirely in TypeScript.** No Python required. The `bunx @ephremyuan/citeagent mcp-server` command starts an MCP stdio server that works with any MCP-compatible tool (Claude Code, Codex, Cursor, Cline, Windsurf, OpenCode). Only document ingestion (`cite_ingest`) shells out to the `citeindex` CLI as an optional sidecar.
+
+### Key Value Propositions
+
+| Promise | Mechanism |
+|---------|-----------|
+| **Zero hallucination** | BM25 deterministic retrieval (no embeddings), mandatory evidence-to-claim mapping, fail-closed integrity verification |
+| **Verifiable citations** | Every claim maps to a SHA-256 hashed text node with a full Merkle proof from leaf → document root |
+| **CJK-first** | Vertical text detection, CJK phrase preservation in search, pinyin indexing, auto-OCR language detection |
+| **Multi-format ingestion** | PDF (digital/scanned), URL, DJVU, EPUB, DOCX, video/audio — via separate `citeindex` package |
 
 ---
 
 ## 2. Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Rust Layer (citeindex-rs)                │
-│  ┌──────────┐   ┌──────────┐   ┌───────────┐   ┌─────────┐  │
-│  │   TUI     │   │  Kernel  │   │   Core    │   │ Plugins │  │
-│  │ (ratatui) │──▶│ (DKEE)  │──▶│ (Engine)  │   │ Manager │  │
-│  └──────────┘   └────┬─────┘   └─────┬─────┘   └─────────┘  │
-│                      │               │                       │
-│           ┌──────────┴───────────────┘                       │
-│           │  AgentRuntime (3 NDJSON bridges)                │
-│           │  Coordinator │ Librarian │ Ingest                │
-│           └──────────┬───────────────────────────────────────┼─┐
-└──────────────────────┼───────────────────────────────────────┘ │
-                       │ stdin/stdout NDJSON                     │
-┌──────────────────────┼───────────────────────────────────────┐ │
-│           Python Layer (citeindex/)                           │ │
-│  ┌─────────┐ ┌─────────┐ ┌──────────┐ ┌────────────────┐   │ │
-│  │Ingestion│ │ Agents  │ │    CLI    │ │ Citation Style │   │ │
-│  │ Pipeline│ │(7-step) │ │ (argparse)│ │  (citeproc)    │   │ │
-│  └─────────┘ └─────────┘ └──────────┘ └────────────────┘   │ │
-│           ┌──────────────────────────────┐                    │ │
-│           │  Agent Harness (CLI wrapper) │                    │ │
-│           │  (cli-anything-citeindex)    │                    │ │
-│           └──────────────────────────────┘                    │ │
-└──────────────────────────────────────────────────────────────┘──┘
-```
-
-### 2.1 Rust Workspace (`citeindex-rs/`)
-
-Four crates in a Cargo workspace:
-
-| Crate | Role | Key Source |
-|-------|------|-----------|
-| **core** | Engine orchestrator, config, IPC bridge, memory, Merkle | `engine.rs`, `ipc.rs`, `memory.rs`, `merkle.rs`, `config.rs` |
-| **kernel** | DKEE state machine, 17 tools, Tantivy+SQLite storage, argument graph, traces, recovery, API | `state_machine.rs`, `storage.rs`, `tools/mod.rs`, `argument_graph.rs`, `api.rs`, `recovery.rs`, 26 modules total |
-| **tui** | Terminal UI: chat/search/ingest/pageindex modes, panels, themes | `app.rs`, `mode.rs`, `ui.rs`, `panels.rs`, `theme.rs`, `input.rs` |
-| **plugins** | Plugin lifecycle: discover, install (local/git), enable/disable | `manager.rs`, `runner.rs`, `manifest.rs` |
-
-**DKEE State Machine** — The kernel drives execution through 8 states:
+### 2.1 Layered Design
 
 ```
-INIT → PLAN → THINK → ACT → VERIFY → COMMIT → REFLECT → DONE
+┌──────────────────────────────────────────────────────────────────┐
+│  MCP Clients (Claude Code, Codex, Cursor, Cline, Windsurf)     │
+│  ↳ bunx @ephremyuan/citeagent mcp-server (TypeScript-native)   │
+│  ↳ bunx @ephremyuan/citeagent mcp-server (TypeScript, primary)   │
+├──────────────────────────────────────────────────────────────────┤
+│  OpenCode Plugin Layer (TypeScript / npm)                        │
+│  @ephremyuan/citeagent v0.3.9                                    │
+│  CiteAgentEngine (native TS, no subprocess), MCP bridge,        │
+│  SafeHarness hooks, skill/rule deployment, 5 agent configs      │
+├──────────────────────────────────────────────────────────────────┤
+│  AI Engine (TypeScript CiteAgentEngine only)                      │
+│  25 tools: BM25 search, Merkle verify, CSL render, regex search, │
+│  memory, crypto, audit, argument graph, PageIndex, etc.          │
+│  All run natively in TS. Only cite_ingest shells out to CLI.    │
+├──────────────────────────────────────────────────────────────────┤
+│  Ingestion Engine (Python / citeindex CLI — sidecar only)         │
+│  PDF, URL, media ingestion with GROBID, MinerU, DSPy,           │
+│  Merkle verification, CSL normalization, schema validation       │
+│  Called via `citeindex` CLI subprocess from TS engine             │
+├──────────────────────────────────────────────────────────────────┤
+│  Storage (Files + MiniSearch index)                              │
+│  corpus/.citeindex/ with document_index, claim_index,          │
+│  memory_index (MiniSearch BM25) + JSONL memory + JSON artifacts  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-With guard validation at each transition, and a 6-tier recovery chain (R1 retry → R6 human-in-the-loop) for failures at ACT→VERIFY or VERIFY→COMMIT.
+| Layer | Language | Package | Role |
+|-------|----------|---------|------|
+| **MCP Server** | TypeScript | `@ephremyuan/citeagent` (npm) | stdio MCP server via `bunx @ephremyuan/citeagent mcp-server` |
+| **CiteAgentEngine** | TypeScript | Built into npm package | Native TS implementation of all 25 tools: BM25 search (MiniSearch), Merkle verification, CSL rendering, memory store, audit trail |
+| **Ingestion** | Python | `citeindex` CLI (sidecar, optional) | PDF/URL/media ingestion — called as subprocess from TS engine |
+| **Storage** | Files + MiniSearch | — | `corpus/.citeindex/` with MiniSearch full-text search + JSONL memory |
 
-**17 Kernel Tools** — Agents can call back into the Rust kernel via NDJSON `tool_call` messages:
-
-| Tool | Purpose |
-|------|---------|
-| `search_documents` | Tantivy full-text search on document index |
-| `search_claims` | Tantivy search on claim index |
-| `search_memory` | Tantivy search on memory index |
-| `index_document` | Add document to Tantivy index |
-| `index_claim` | Add claim to claim index |
-| `delete_document` | Remove document from indexes |
-| `ag_query_claims` | SQLite argument graph: query claims |
-| `ag_query_contradictions` | SQLite argument graph: find contradictions |
-| `ag_write_edge` | SQLite argument graph: add edge |
-| `merkle_compute` | Compute SHA-256 Merkle hash |
-| `merkle_verify` | Verify Merkle proof |
-| `csl_render` | Render CSL-JSON to formatted citation |
-| `tree_load` | Load PageIndex tree from storage |
-| `tree_traverse` | Navigate PageIndex tree hierarchy |
-| `regex_search` | Regular expression search on stored text |
-| `memory_save` | Persist memory entry (JSONL + Tantivy) |
-| `tantivy_search` / `tantivy_index` | Direct Tantivy operations |
-
-**Storage Layout** — `~/.citeindex/` (or `corpus/.citeindex/`):
+### 2.2 The 7-Agent Search Pipeline
 
 ```
-~/.citeindex/
-├── config/           # Default TOML configs, agent manifests, taxonomy, synonyms
-├── indexes/          # Tantivy: document_index, claim_index, memory_index
-├── documents/
-│   ├── sources/      # Original PDFs (immutable)
-│   ├── structured/   # PageIndex trees (.citeindex.json)
-│   └── transcripts/  # Media transcripts (.transcript.json)
-├── citations/        # CSL-JSON artifacts
-├── memory/           # JSONL per-thread chat memory
-├── lora/             # LoRA fine-tune data
-├── fine_tune/        # Training sets
-├── traces/           # JSONL execution traces (YYYY-MM-DD/)
-├── logs/             # Runtime logs
-├── run/              # PID files, sockets
-└── tmp/              # Temporary scratch
+Query → CorpusLoader → IndexingAgent → QueryPlanner → RetrievalAgent
+                                                          ↓
+                                               ClarificationAgent (if ambiguous)
+                                                          ↓
+                                               GenerationAgent → IntegrityVerifier
+                                                          ↓
+                                               Answer + Chicago citations + Merkle proofs
 ```
 
-### 2.2 Python Package (`citeindex/`)
+| Agent | Mechanism | Status |
+|-------|-----------|--------|
+| **CorpusLoader** | Walks corpus, loads csl.json/document.json/merkle.json | ✅ Real |
+| **IndexingAgent** | `simple_v1` tokenizer (CJK-aware), BM25 postings | ✅ Real |
+| **QueryPlanner** | Heuristic intent detection, CJK phrase preservation | ✅ Real |
+| **RetrievalAgent** | 3-stage: metadata filter → BM25 (k1=1.2, b=0.75) → trace filter | ✅ Real |
+| **ClarificationAgent** | LLM-generated questions when query ambiguous | ✅ Real |
+| **GenerationAgent** | Extractive (default) or LLM-based; Chicago citations | ✅ Real |
+| **IntegrityVerifier** | 4-check fail-closed: node exists, hash match, Merkle proof, citation resolved | ✅ Real |
 
-#### Core Modules
+### 2.3 v12 NDJSON Agent Runtime (Removed)
 
-| Module | Purpose |
-|--------|---------|
-| `cli.py` | CLI entry point: `ingest`, `search`, `chat`, `memory`, `plugin` subcommands |
-| `main.py` | Legacy `CitationExtractor` — URL-based citation extraction |
-| `model.py` | `CitationLLM` — DSPy-based LLM extraction (book/thesis/journal/chapter/page numbers); `ImprovedPageNumberExtractor` — sophisticated PDF page detection |
-| `llm.py` | `get_llm_model()` — returns `dspy.LM` configured for Ollama or Gemini |
-| `search.py` | `search_for_missing_info()` — local Perplexica API search for missing metadata |
-| `utils.py` | 40+ utilities: PDF handling, CSL conversion, author parsing, URL cleaning |
-| `citation_style.py` | `format_bibliography()` — renders CSL-JSON via citeproc-py with bundled CSL styles |
-| `type_judge.py` | Rule-based document type classification (thesis/article/book/etc.) |
-| `vertical_handler.py` | Vertical CJK text detection (PPStructureV3/PaddleOCR) and rotation handling |
-| `vertical_llm.py` | `VerticalCitationLLM` — extends CitationLLM for traditional Chinese/Japanese vertical text |
-| `ocr_lang_detect.py` | FastText language detection → Tesseract OCR language string |
-| `ocr_text_clean_before_llm.py` | OCR text cleaning: blank page filtering, content detection, noise removal |
-| `file_converter.py` | Office/DJVU → PDF conversion (LibreOffice, ddjvu, PyMuPDF) |
-| `page_extractor.py` | `PageNumberExtractor` — extract page numbers from MinerU middle JSON |
-
-#### Agent Pipeline (`citeindex/agents/`)
-
-Seven deterministic agents in a strict pipeline:
-
-```
-┌───────────┐    ┌──────────┐    ┌──────────────┐    ┌────────────┐
-│ Ingestion │───▶│ Indexing │───▶│ Query Planner│───▶│ Retrieval  │
-└───────────┘    └──────────┘    └──────────────┘    └─────┬──────┘
-                                                            │
-                     ┌──────────────┐    ┌────────────┐    │
-                     │  Integrity  │◀───│ Generation │◀───┘
-                     └──────────────┘    └─────┬──────┘
-                                               │
-                                    ┌──────────┴──────┐
-                                    │ Clarification   │
-                                    │ (if ambiguous)  │
-                                    └─────────────────┘
-```
-
-| Agent | Input | Output | Mechanism |
-|-------|-------|--------|-----------|
-| **CorpusLoader** | Corpus root path | `all_nodes`, `csl_registry`, `merkle_registry` | Walk corpus dirs, load JSON artifacts |
-| **IndexingAgent** | Nodes + CSL | `inverted_index`, `section_index`, `cross_source_links` | `simple_v1` tokenizer (CJK-aware), BM25-style postings |
-| **QueryPlanner** | User query string | `QueryPlan` (intent, terms, filters, retrieval_policy) | Heuristic intent detection, CJK phrase preservation |
-| **RetrievalAgent** | QueryPlan + Index | `ranked_nodes[]` | 3-stage: metadata filter → BM25 scoring → trace filter |
-| **ClarificationAgent** | Ambiguous QueryPlan | `ClarificationPacket` (up to 3 questions) | LLM-generated questions when query is vague |
-| **GenerationAgent** | Ranked nodes + CSL | `AnswerMachine` (evidence items) + `answer_human` (Markdown) | Extractive (default) or LLM-based; Chicago author-date citations |
-| **IntegrityVerifier** | AnswerMachine + registries | `IntegrityReport` (approved/rejected) | 5-check fail-closed: node exists, hash match, Merkle proof, citation key, claim evidence |
-
-#### Ingestion Pipeline (`citeindex/ingestion/`)
-
-The `CiteIndexIngestionOrchestrator` routes input to one of four sub-pipelines:
-
-**Digital PDF** (`pipelines/digital_pdf.py`):
-```
-PDF → GROBID (metadata) → MinerU (layout) → DSPy reconciliation
-    → document structure (pages/columns/paragraphs/lines)
-    → Merkle tree → retrieval index
-```
-
-**Scanned PDF** (`pipelines/scanned_pdf.py`):
-```
-PDF → OCRmyPDF (normalize) → PaddleOCR (vertical detect) → MinerU (layout)
-    → Tesseract (text) → GROBID (citations) → document structure
-    → Merkle tree → retrieval index
-```
-
-**URL Article** (`pipelines/url_article.py`):
-```
-URL → Playwright/requests (fetch) → trafilatura (content)
-    → Zotero (metadata) → CSL JSON → deterministic chunking
-    → hashes → Merkle tree → store
-```
-
-**Media** (`pipelines/media.py`):
-```
-URL/File → yt-dlp (download) → ffmpeg (audio) → WhisperX (transcription)
-    → pyannote (diarization, optional) → CSL JSON → chunking
-    → hashes → Merkle tree → store
-```
-
-#### v12 Runtime (`agents/v12_runtime.py`)
-
-The NDJSON protocol adapter (≈950 lines) bridges Rust kernel ↔ Python agents:
-
-| Agent | Available Kernel Tools |
-|-------|----------------------|
-| CoordinatorAgent | search_memory, tantivy_search, memory_save, tree_load, tree_traverse, csl_render |
-| LibrarianAgent | tantivy_search, tree_load, search_memory |
-| IngestAgent | tree_load, tantivy_index, merkle_compute |
-| ClaimExtractionAgent | tree_load, tree_traverse, index_claim, merkle_compute |
-| ContradictionAgent | search_claims, ag_query_claims, ag_query_contradictions, ag_write_edge |
-| GapIdentificationAgent | search_documents, search_claims, tree_load |
-| LiteratureReviewAgent | search_documents, search_claims, search_memory, csl_render, tree_load, tree_traverse |
-| HierarchyClassificationAgent | tree_load |
-| StructureAgent | search_claims, ag_query_contradictions, tree_load, regex_search |
-
-**Crash recovery**: Up to 3 respawns with exponential backoff (1s, 5s, 15s). Counter resets after 1 hour of stability.
-
-### 2.3 Agent Harness (`agent-harness/`)
-
-A separate Python package `cli-anything-citeindex` providing a richer CLI on top of the core engine:
-
-```
-cli-anything-citeindex
-├── project   — corpus management
-├── ingest    — document ingestion
-├── search    — search queries
-├── chat      — chat with citations
-├── memory    — memory search & listing
-├── export    — bibliography rendering
-├── session   — session management (undo/redo/save/load)
-└── repl      — interactive REPL with prompt_toolkit
-```
-
-Uses `CiteIndexBackend` as a single adapter wrapping the `citeindex` Python package.
+> **Note:** The `v12_runtime.py` module was a Python-only component that bridged 9 agent adapters over a stdin/stdout JSONL protocol with crash recovery. It has been **removed** along with the entire Python package. The TypeScript `CiteAgentEngine` does **not** use a v12 runtime; it implements the 7 deterministic search-pipeline agents directly in TypeScript (see §2.2 above).
 
 ---
 
-## 3. Workflows in Detail
+## 3. Package Layout
 
-### 3.1 Workflow: Ingestion (Data In)
+> **Note:** The Python `citeagent/` package has been removed. All functionality now runs natively in TypeScript via the `CiteAgentEngine`.
 
-```
-User → citeindex ingest <path_or_url>
-         │
-         ▼
-    ┌─────────────────────────────────┐
-    │  CiteIndexIngestionOrchestrator │
-    │  detect_resource_type()         │
-    └───────┬─────────────────────────┘
-            │
-   ┌────────┼──────────┬─────────────┬──────────────┐
-   ▼        ▼          ▼             ▼              ▼
-digital_pdf scanned_pdf  url_article   media    office/djvu
-   │        │          │             │         (convert→pdf)
-   │        │          │             │              │
-   ▼        ▼          ▼             ▼              ▼
-┌──────┐ ┌──────┐ ┌──────────┐ ┌───────┐    ┌──────────┐
-│GROBID│ │OCRmy │ │Playwright│ │yt-dlp │    │LibreOffice│
-│metadata│ │PDF  │ │trafilatura│ │ffmpeg │    │/ddjvu    │
-└──┬───┘ └──┬───┘ └────┬─────┘ └───┬───┘    └─────┬────┘
-   │        │          │           │              │
-   ▼        ▼          ▼           ▼              ▼
-┌──────┐ ┌──────┐ ┌──────────┐ ┌───────┐    ┌──────────┐
-│MinerU│ │Paddle│ │  Zotero   │ │WhisperX│   │(delegate  │
-│layout│ │OCR   │ │  metadata │ │transcr.│   │to digital │
-└──┬───┘ └──┬───┘ └────┬─────┘ └───┬───┘    │or scanned)│
-   │        │          │           │         └──────────┘
-   ▼        ▼          ▼           ▼
-┌─────────────────────────────────────┐
-│  DSPy reconciliation + CSL JSON     │
-│  Document structure builder          │
-│  Merkle tree generation (SHA-256)   │
-│  Retrieval index generation          │
-└──────────────┬──────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────┐
-│  Standardize CSL JSON                │
-│  (add ci_ extensions: content_hash,  │
-│   merkle_root, source_type,          │
-│   ingestion_timestamp)               │
-└──────────────┬───────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────┐
-│  Store to corpus/                    │
-│  ├── csl.json                        │
-│  ├── document.json                   │
-│  ├── merkle.json                     │
-│  ├── index.json                      │
-│  └── ingestion_output.json           │
-└──────────────┬───────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────┐
-│  v12: Tantivy index + .citeindex/    │
-│  (if Rust kernel is running)         │
-└──────────────────────────────────────┘
-```
-
-### 3.2 Workflow: Search (Data Out — Deterministic)
+### 3.1 TypeScript Plugin (`plugins/opencode-citeagent/`)
 
 ```
-User → citeindex search "query terms"
-         │
-         ▼
-    ┌──────────────┐
-    │ CorpusLoader │  ← Walk corpus/, load all csl.json/document.json/merkle.json
-    └──────┬───────┘
-           │
-           ▼
-    ┌──────────────┐
-    │ IndexingAgent│  ← simple_v1 tokenizer, CJK-aware, stop-word filtered
-    │              │    Build: inverted_index, section_index, cross_source_links
-    └──────┬───────┘
-           │
-           ▼
-    ┌──────────────┐
-    │ QueryPlanner │  ← Detect intent (fact/comparison/timeline/definition/citation_lookup)
-    │              │    Extract exact phrases (CJK-preserved)
-    │              │    Build must/should metadata filters
-    │              │    Select retrieval policy
-    └──────┬───────┘
-           │
-           ▼
-    ┌─────────────────────────────────────────┐
-    │           RetrievalAgent                │
-    │  Stage 1: Metadata filter               │
-    │    → Filter nodes by author/year/type    │
-    │  Stage 2: BM25 scoring (k1=1.2, b=0.75) │
-    │    + phrase boost (+5.0)                 │
-    │    + section boost (+3.0)                │
-    │  Stage 3: Trace filter                   │
-    │    → Drop nodes missing sha256/source_id │
-    │  Tie-break: score → phrase → section     │
-    │             → page → node_id             │
-    └──────┬──────────────────────────────────┘
-           │
-           ▼
-    ┌──────────────────────────────────────────┐
-    │ Enrich with citations                    │
-    │ → Lookup CSL record by source_id         │
-    │ → format_bibliography() via citeproc-py   │
-    │ → Return ranked results with citations    │
-    └──────────────────────────────────────────┘
+plugins/opencode-citeagent/
+├── package.json             # @ephremyuan/citeagent v0.3.9
+├── bin/install.ts           # Plugin installer
+├── src/
+│   ├── index.ts             # Plugin entry point
+│   ├── mcp-bridge.ts        # MCP stdio bridge for external MCP clients
+│   ├── safeharness.ts       # SafeHarness security hooks
+│   ├── verification.ts      # Verification ladder (L0-L4)
+│   ├── ltl-monitor.ts       # Linear temporal logic monitor
+│   ├── crypto.ts            # Crypto operations
+│   ├── memory.ts            # Memory store
+│   ├── types.ts             # TypeScript type definitions
+│   ├── tools/index.ts       # Tool definitions
+│   ├── hooks/index.ts       # Hook system
+│   └── engine/
+│       ├── index.ts         # CiteAgentEngine (native TS BM25 via MiniSearch)
+│       ├── merkle.ts        # Merkle tree (TS implementation)
+│       ├── search.ts        # Search engine
+│       ├── pageindex.ts     # PageIndex tree
+│       ├── corpus-loader.ts # Corpus loader
+│       ├── crypto-engine.ts # Crypto engine
+│       ├── audit-store.ts   # Audit storage
+│       ├── argument-graph.ts # Argument graph
+│       ├── csl.ts           # CSL processing
+│       └── memory-store.ts  # Memory store
+├── assets/
+│   ├── agents/              # 5 agent configs (researcher, verifier, explore-corpus, ingestor, reviewer)
+│   ├── skills/              # 3 skills (ingest-document, literature-review, verify-evidence)
+│   └── rules/               # 2 rules (academic-integrity, citation-format)
+└── dist/                    # Built output
 ```
 
-### 3.3 Workflow: Chat (Data Out — LLM + Integrity)
+### 3.3 Docs & Configuration
 
 ```
-User → citeindex chat --prompt "question"
-         │
-         ▼
-    ┌───────────────┐
-    │ CorpusLoader  │ ──▶ IndexingAgent ──▶ QueryPlanner
-    └───────────────┘
-                                        │
-                              ┌─────────┴─────────┐
-                              │ clarification_     │
-                              │ required?          │
-                              └────┬──────────┬────┘
-                              Yes  │          │ No
-                                   ▼          │
-                          ┌──────────────┐    │
-                          │Clarification │    │
-                          │Agent         │    │
-                          │(up to 3 ?s)  │    │
-                          └──────────────┘    │
-                                   │          │
-                                   ▼          ▼
-                           ┌─────────────────────┐
-                           │  RetrievalAgent     │
-                           │  (3-stage BM25)     │
-                           └──────────┬──────────┘
-                                      │
-                                      ▼
-                           ┌─────────────────────┐
-                           │  GenerationAgent     │
-                           │                      │
-                           │  Build EvidenceItems │
-                           │  ├─ node_id          │
-                           │  ├─ source_id        │
-                           │  ├─ sha256            │
-                           │  ├─ merkle_proof[]   │
-                           │  ├─ citation_key     │
-                           │  └─ citation_rendered│
-                           │                      │
-                           │  Generate answer:    │
-                           │  ├─ Extractive:     │
-                           │  │  blockquotes with │
-                           │  │  inline citations│
-                           │  └─ LLM-based:      │
-                           │     "Based ONLY on  │
-                           │      evidence…"     │
-                           └──────────┬──────────┘
-                                      │
-                                      ▼
-                           ┌─────────────────────┐
-                           │  IntegrityVerifier  │
-                           │  (5 checks, fail-   │
-                           │   closed)           │
-                           │                     │
-                           │  1. Node exists     │
-                           │  2. Hash match      │
-                           │  3. Merkle proof    │
-                           │  4. Citation key    │
-                           │  5. Claim evidence  │
-                           │                     │
-                           │  Any fail → REJECT  │
-                           │  All pass → APPROVE │
-                           └──────────┬──────────┘
-                                      │
-                                      ▼
-                           ┌─────────────────────┐
-                           │  Save Memory        │
-                           │  JSONL per thread   │
-                           │  v12: Tantivy +     │
-                           │  SQLite memory      │
-                           └─────────────────────┘
-```
+docs/
+├── project-report.md        # This report
+├── citeagent-audit-report.md # Detailed stub/partial implementation audit
+└── plans/
+    ├── 2026-04-30-citeagent-refactor.md
+    └── 2026-05-01-citeagent-ts-native.md
 
-**Chat output format:**
-
-```json
-{
-  "status": "ok",
-  "query_id": "q-abc123def456",
-  "answer_human": "## Query: ...\n> Evidence text\n> — [Author Year] (node: `s5.1.p5`)",
-  "answer_machine": {
-    "schema_version": "1.0.0",
-    "query_id": "...",
-    "answer": "...",
-    "evidence": [
-      {
-        "node_id": "s5.1.p5",
-        "sha256": "abc123...",
-        "document_merkle_root": "def456...",
-        "merkle_proof": ["leaf_hash", "...", "root_hash"],
-        "citation_key": "Author2023Title",
-        "citation_rendered": "Author, A. (2023). Title. Journal, 1(2), 3–4."
-      }
-    ]
-  },
-  "integrity": {
-    "status": "approved",
-    "checks": [...],
-    "violations": []
-  },
-  "thread": "default"
-}
-```
-
-### 3.4 Workflow: v12 Runtime (Rust ↔ Python IPC)
-
-```
-┌────────────────────────────────────────────────────────┐
-│                     Rust Kernel                         │
-│                                                        │
-│  ┌─────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │   TUI    │───▶│ DKEE State   │───▶│ ToolDispatc. │  │
-│  │ (ratatui)│    │ Machine      │    │ (17 tools)   │  │
-│  └─────────┘    └──────┬───────┘    └──────┬───────┘  │
-│                        │                    │           │
-│                        ▼                    │           │
-│                 ┌──────────────┐            │           │
-│                 │ AgentRuntime │◄───────────┘           │
-│                 │ (3 bridges)  │  tool_response         │
-│                 └──────┬───────┘                       │
-└────────────────────────┼────────────────────────────────┘
-                         │ NDJSON over stdin/stdout
-         ┌───────────────┼───────────────┐
-         ▼               ▼               ▼
-  ┌────────────┐ ┌────────────┐ ┌────────────┐
-  │Coordinator │ │ Librarian  │ │   Ingest   │
-  │  Agent     │ │  Agent     │ │   Agent    │
-  │ (Python)   │ │ (Python)   │ │ (Python)   │
-  └────────────┘ └────────────┘ └────────────┘
-```
-
-**Protocol sequence:**
-
-```
-Kernel                  Agent
-  │                       │
-  │──── init ────────────▶│
-  │◀─── init_ack ────────│  (protocol version check)
-  │                       │
-  │──── request ────────▶│  {task_id, inputs}
-  │                       │
-  │  ┌─── tool_call ──────│  (agent needs kernel tool)
-  │  │                    │
-  │──▶ tool_response ────▶│  (kernel executes tool, returns result)
-  │  │                    │
-  │  │◀── progress ───────│  (optional progress updates)
-  │  │◀── llm_report ────│  (optional LLM trace spans)
-  │  └                   │
-  │◀─── result ──────────│  {output, output_hash, resource_usage}
-  │                       │
-  │   OR                  │
-  │◀─── error ────────────│  {classification, message}
-  │                       │
-  │  (loop back to IDLE)  │
-```
-
-### 3.5 Workflow: Agent-Harness REPL
-
-```
-User → cli-anything-citeindex repl
-         │
-         ▼
-    ┌──────────────────────────────────┐
-    │  prompt_toolkit REPL            │
-    │  (autocomplete, history)         │
-    └───────┬──────────────────────────┘
-            │
-   ┌────────┼──────────┬──────────────┬─────────────┐
-   ▼        ▼          ▼              ▼             ▼
-project   ingest     search         chat         memory
-   │        │          │              │             │
-   ▼        ▼          ▼              ▼             ▼
-CiteIndexBackend ──▶ CiteIndexIngestionOrchestrator
-                  ──▶ ChatPipeline / SearchPipeline
-                  ──▶ CiteIndexSession (undo/redo)
+.agent/                      # Legacy agent definitions (YAML schemas, pipelines)
+.opencode/                    # OpenCode agent/skill/rule configs
+instruction/Summary.md        # Canonical project summary
+mcp-setup.md                 # MCP client setup for Claude Code, Codex, Cursor, Cline, Windsurf
+install.md                   # Installation guide (human + LLM agent)
+Agent.md                     # Behavioral guidelines (Karpathy-inspired)
 ```
 
 ---
 
-## 4. Data Models
+## 4. MCP Server — Tool Inventory
 
-### 4.1 PageIndex JSON Tree (Canonical Document Schema)
+The MCP server (`bunx @ephremyuan/citeagent mcp-server`) exposes **25 tools** via the TypeScript-native `CiteAgentEngine`:
 
-```
-Level 0: CSL-JSON root
-  ├─ id, type, title, author, issued, DOI, URL
-  └─ ci_* extensions (content_hash, merkle_root, source_type, ingestion_timestamp)
+### Fully Implemented
 
-Level 1: Major sections
-  ├─ heading, section_type, page_range
-  └─ children: [Level 2]
+| Tool | Handler | Mechanism |
+|------|---------|-----------|
+| `search_documents` | `_handle_search_documents` | BM25 via `SearchPipeline` |
+| `search_claims` | `_handle_search_claims` | v12 `ClaimExtractionAgent` adapter (regex) |
+| `search_memory` | `_handle_search_memory` | `MemoryStore.search()` |
+| `index_document` | `_handle_index_document` | `CiteIndexIngestionOrchestrator.ingest()` |
+| `delete_document` | `_handle_delete_document` | `shutil.rmtree` + cache reset |
+| `regex_search` | `_handle_regex_search` | `re.compile` over corpus nodes |
+| `merkle_compute` | `_handle_merkle_compute` | `citeindex.ingestion.deterministic` |
+| `merkle_verify` | `_handle_merkle_verify` | SHA-256 proof walk + corpus cross-check |
+| `csl_render` | `_handle_csl_render` | `citeproc-py` formatting |
+| `tree_load` | `_handle_tree_load` | `PageIndexRetrievalAgent._load_trees()` |
+| `tree_traverse` | `_handle_tree_traverse` | `PageIndexRetrievalAgent._find_node_in_tree()` |
+| `memory_save` | `_handle_memory_save` | `MemoryStore.save()` |
+| `tantivy_search` | `_handle_tantivy_search` | `TantivyManager.search_documents()` |
+| `tantivy_index` | `_handle_tantivy_index` | Ingest via `CiteIndexIngestionOrchestrator` + `TantivyManager.index_document()` |
+| `audit_save` | `_handle_audit_save` | JSON file in `corpus/.audits/` |
+| `audit_retrieve` | `_handle_audit_retrieve` | JSON file read |
+| `memory_store_tier` | `_handle_memory_store_tier` | JSONL per tier (working/episodic/long_term) |
+| `memory_retrieve_tier` | `_handle_memory_retrieve_tier` | Substring search over tier JSONL |
+| `memory_consolidate` | `_handle_memory_consolidate` | Move episodic → long-term, dedupe by hash |
+| `crypto_sign` | `_handle_crypto_sign` | HMAC-SHA256 per session |
+| `crypto_verify` | `_handle_crypto_verify` | HMAC-SHA256 verification |
+| `crypto_audit_trail` | `_handle_crypto_audit_trail` | Hash chain integrity check |
+| `safeharness_check` | `_handle_safeharness_check` | 3-layer: sanitize → verify → constrain |
+| `safeharness_sanitize` | `_handle_safeharness_sanitize` | Input sanitization (trim + redact) |
+| `index_claim` | `_handle_index_claim` | v12 `ClaimExtractionAgent` adapter |
+| `ag_query_claims` | `_handle_ag_query_claims` | Corpus node lookup |  ⚠️ Partial |
+| `ag_query_contradictions` | `_handle_ag_query_contradictions` | v12 `ContradictionAgent` (duplicate-only) | ⚠️ Partial |
 
-Level 2: Subsections
-  ├─ heading, section_number
-  └─ children: [Level 3]
+### Removed (v0.4.0 refactor)
 
-Level 3: Locators
-  ├─ page_number / paragraph_number / timestamp
-  └─ text_blocks[] / transcript_text
-
-Level 4: Lines (primary sources only)
-  ├─ line_number, text, line_type
-  └─ (leaf nodes with SHA-256)
-```
-
-### 4.2 Answer Machine (Unified Output Schema)
-
-```json
-{
-  "schema_version": "1.0.0",
-  "query_id": "q-...",
-  "answer": "...",
-  "evidence": [
-    {
-      "node_id": "s5.1.p5",
-      "source_id": "Author2023Title",
-      "sha256": "abc123...",
-      "document_merkle_root": "def456...",
-      "merkle_proof": ["step1_hash", "step2_hash", "root_hash"],
-      "citation_key": "Author2023Title",
-      "citation_rendered": "Author, A. (2023). Title. Journal, 1(2), 3–4.",
-      "section_path": "Chapter 5 > Section 1"
-    }
-  ]
-}
-```
-
-### 4.3 Merkle Tree Structure
-
-Every text node gets a SHA-256 hash. The tree aggregates:
-
-```
-line → paragraph → column → page → document → merkle_root
-```
-
-Each evidence item in an answer walks from its leaf hash up to the document root, producing a **Merkle proof** that can be independently verified.
+| Tool | Reason |
+|------|--------|
+| `ag_write_edge` | No persistent argument graph — deferred to Rust kernel |
+| `safeharness_checkpoint` | No real rollback implementation |
+| `safeharness_rollback` | No real rollback implementation |
+| `safeharness_status` | No real rollback implementation |
+| `memory_summarize` | Was concatenation-only, no LLM summarization |
 
 ---
 
-## 5. Key Dependencies
+## 5. Implementation Status Matrix
 
-| Category | Dependency | Purpose |
-|----------|-----------|---------|
-| **LLM** | `dspy-ai>=2.6.27` | DSPy programmatic LLM calls |
-| | `litellm>=1.83.0` | Multi-backend LLM routing |
-| **OCR** | `ocrmypdf` | PDF normalization and OCR |
-| | `paddleocr`, `paddlepaddle` | CJK vertical text detection |
-| | `fasttext` | Language detection for OCR |
-| **PDF** | `pymupdf` | PDF manipulation |
-| | `mineru[all]>=2.6.4` | Layout analysis (magic-pdf) |
-| **Citation** | `citeproc-py` | CSL-JSON → formatted bibliography |
-| **Web** | `crawl4ai` | Web crawling |
-| | `trafilatura` | HTML → clean text extraction |
-| | `playwright` | JS-rendered page fetching |
-| **Media** | `whisperx` | Audio transcription |
-| | `pyannote-audio` | Speaker diarization |
-| | `pymediainfo` | Media metadata extraction |
-| **CJK** | `pypinyin` | Chinese pinyin indexing |
-| **Storage** | (Rust) `tantivy` | Full-text search index |
-| | (Rust) `rusqlite` | SQLite for argument graph |
-| **CLI** | `click` | Agent-harness CLI |
-| | `prompt-toolkit` | REPL with completion |
-| **TUI** | (Rust) `ratatui` | Terminal UI framework |
+### Fully Real & Working
 
----
+| System | Evidence |
+|--------|----------|
+| 7-agent chat pipeline (`ChatPipeline`) | 8-step pipeline: load→index→plan→clarify→retrieve→generate→verify→save memory |
+| BM25 search (`SearchPipeline`) | Full BM25(k1=1.2, b=0.75) with metadata filtering, phrase boosts, section boosts |
+| Tantivy full-text search | `TantivyManager` with 3 indexes (document, claim, memory) via `tantivy-py` |
+| Corpus loading / indexing | `CorpusLoader` walks corpus, loads nodes; `IndexingAgent` builds inverted index |
+| Regex search | Real `re.compile` search over corpus nodes |
+| Document deletion | `shutil.rmtree` + cache reset |
+| Integrity verification | 4-check fail-closed: node exists, hash match, Merkle proof, citation resolved |
+| Memory persistence (JSONL) | 4-tier model (working/episodic/long_term/corpus), keyword search |
+| PageIndex tree building | Vendored PageIndex + Ollama. Full TOC detection, tree construction |
+| PageIndex retrieval | LLM-driven tree navigation as alternative to BM25 |
+| CSL citation rendering | `citeproc-py` with bundled styles |
+| Crypto (HMAC) | HMAC-SHA256 signing, verification, audit trail chain |
+| SafeHarness (3/4 layers) | Sanitization + tier classification + permission check. Layer 4 deferred |
+| ~~v12 runtime protocol~~ | Removed — TS engine implements 7 agents directly (no JSONL bridge) |
+| Ingestion (all 4 pipelines) | Real end-to-end — via `citeindex` CLI sidecar (optional) |
+| MCP server | 25 handlers, all imports work, `TantivyManager` creates indexes |
 
-## 6. Contract System (`.agent/`, `instruction/contracts/`)
+### Partial / Needs LLM Logic
 
-The project uses YAML contract files to define the schema for every pipeline stage:
+| System | Current | Missing |
+|--------|---------|---------|
+| Claim Extraction | Regex sentence splitting | LLM-based semantic claim decomposition, polarity classification, NER |
+| Contradiction Detection | Exact duplicate text match | Semantic contradiction detection, LLM reasoning, edge weights |
+| Gap Identification | Threshold comparison (`coverage_score < threshold`) | Semantic gap analysis, cross-source comparison, actionable suggestions |
+| Hierarchy Classification | 3 hardcoded keyword sets → 3 paths | LLM-based LCC/DDC classification, multi-label, domain-aware |
 
-| Contract | Scope |
-|----------|-------|
-| `I1_tool_dispatcher_contract.md` | 16-tool kernel syscall layer (LOCKED) |
-| `I2_agent_runtime_contract.md` | NDJSON IPC protocol (LOCKED) |
-| `S1_citeindex_tree_schema.md` | PageIndex JSON Tree schema (LOCKED) |
-| `S5_storage_layout.md` | Full directory layout (LOCKED) |
-| Stage schemas: `ingestion_input.yaml` → `ingestion_output.yaml` → `indexing_input.yaml` → … → `integrity_output.yaml` | Pipeline stage I/O |
-| `answer_machine.yaml` | Unified answer schema |
+### Deferred / Removed
 
-Pipeline definitions in `.agent/pipeline/`:
-- `citeindes_master_ingestion.yaml` — Master orchestrator
-- `digital_pdf_ingestion.yaml` — 7-stage digital PDF pipeline
-- `scanned_pdf_ingestion.yaml` — 8-stage scanned PDF pipeline
-- `url_article_ingestion.yaml` — 12-step URL pipeline
-- `media_ingestion.yaml` — 14-step media pipeline
-- `chat_mode.yaml` — Legacy chat flow (LEGACY)
-- `search_subcommand.yaml` — Search pipeline
-- `rust_core_orchestration.yaml` — Rust core orchestrator
-- `frontend_ui_rust.yaml` — Rust TUI frontend
-
-**Precedence**: `instruction/contracts/*` > `instruction/Summary.md` > Rust implementation > `.agent/` (legacy)
+| System | Status | Reason |
+|--------|--------|--------|
+| Argument graph persistence (SQLite) | `ag_write_edge` removed | No persistent store without Rust kernel |
+| SafeHarness L4 (rollback) | Handlers removed | No real rollback implementation |
+| Memory summarization | Handler removed | Was concatenation-only |
+| StructureAgent | Deleted | No real argument structure analysis |
+| Embeddings / Vector search | Not present | Design decision (deterministic-only) |
+| PostgreSQL memory | JSONL only | Acceptable for MVP |
+| Rust kernel (`citeindex-rs/`) | Deleted from repo | Future goal, not current code |
 
 ---
 
-## 7. Design Principles
+## 6. Corpus Layout
+
+```
+corpus/
+├── .citeindex/
+│   ├── indexes/
+│   │   ├── document_index/      # Tantivy: doc_id, title, author, abstract, body, source_type, language, merkle_root, citation_key, doi
+│   │   ├── claim_index/         # Tantivy: claim_id, doc_id, claim_text, polarity_tag, hierarchy_path
+│   │   └── memory_index/        # Tantivy: memory_id, content, thread_id, tier, sha256
+│   ├── documents/
+│   │   ├── sources/             # Original PDFs (immutable)
+│   │   ├── structured/          # PageIndex trees (.citeindex.json)
+│   │   └── transcripts/         # Media transcripts (.transcript.json)
+│   ├── memory/
+│   │   ├── episodic/            # Per-thread JSONL
+│   │   └── long_term/           # Consolidated JSONL
+│   └── .audits/                 # Audit results (JSON)
+├── .crypto/                     # HMAC session keys + audit trails
+├── .memory/                     # Legacy memory (JSONL)
+└── {source-folder}/             # Legacy per-document folders
+    ├── csl.json
+    ├── document.json
+    ├── merkle.json
+    └── ingestion_output.json
+```
+
+The `.citeindex/` tree is the **runtime source of truth**. Legacy folders remain for migration and compatibility.
+
+---
+
+## 7. Dependencies
+
+> **Note:** The Python `citeagent` package has been removed. All runtime dependencies are now TypeScript-only.
+
+### TypeScript Plugin (`@ephremyuan/citeagent` v0.3.9)
+
+| Dependency | Version | Purpose |
+|------------|---------|---------|
+| `@opencode-ai/plugin` | 1.14.30 | OpenCode plugin SDK |
+| `@modelcontextprotocol/sdk` | ^1.29.0 | MCP server + client SDK |
+| `zod` | ^3.23.0 | Schema validation |
+| `minisearch` | ^7.1.0 | Client-side BM25 search engine |
+
+### Python Sidecar (optional — for `cite_ingest` only)
+
+| Dependency | Version | Purpose |
+|------------|---------|---------|
+| `citeindex` | ≥ 0.12.0 | Ingestion engine (PDF, URL, media, Merkle) |
+
+### External Services (Optional)
+
+| Service | URL | Purpose | Fallback? |
+|---------|-----|---------|-----------|
+| **Ollama** | localhost:11434 | LLM for DSPy extraction, PageIndex, generation | Yes → extractive mode |
+| **GROBID** | localhost:8070 | Deterministic PDF metadata + references | Yes → LLM extraction |
+| **MinerU CLI** | `magic-pdf` on PATH | PDF layout analysis | Yes → fitz layout |
+| **Zotero translator** | localhost:1969 | Rich URL metadata | Yes → trafilatura |
+| **Playwright** | citeindex sidecar only | JS-rendered URL fetching (citeindex dependency, not CiteAgent) | Yes → requests |
+| **yt-dlp** | on PATH | Media download | No → fails |
+| **ffmpeg** | on PATH | Audio extraction | No → no transcript |
+
+---
+
+## 8. CLI Commands
+
+```bash
+# Ingest documents (delegates to citeindex)
+citeagent ingest "paper.pdf"
+citeagent ingest "scanned.pdf" --lang auto
+citeagent ingest "chinese.pdf" --text-direction vertical
+citeagent ingest "https://example.com/article" --all-url-article
+
+# Search corpus (BM25 or PageIndex reasoning)
+citeagent search "Kantian categorical imperative"
+citeagent search "fairness" --top-k 50 --retrieval pageindex
+
+# Chat with trace-bound citations
+citeagent chat --prompt "What does the author argue about social contract theory?"
+citeagent chat --llm ollama/qwen3
+
+# Memory management
+citeagent memory search "social contract"
+citeagent memory list
+
+# Plugin management
+citeagent plugin install /path/to/plugin
+citeagent plugin list
+```
+
+---
+
+## 9. MCP Client Integration
+
+CiteAgent's MCP server works with any MCP-compatible tool:
+
+| Client | Config Location | Config Format |
+|--------|----------------|---------------|
+| **Claude Code** | `.mcp.json` (project) or `claude mcp add` | JSON |
+| **Codex CLI** | `~/.codex/config.toml` | TOML |
+| **Cursor** | `.cursor/mcp.json` | JSON |
+| **Cline** | `cline_mcp_settings.json` | JSON |
+| **Windsurf** | `~/.codeium/windsurf/mcp_config.json` | JSON |
+| **OpenCode** | `bunx @ephremyuan/citeagent@latest install` | Auto-configured |
+
+See `mcp-setup.md` for exact file paths and configurations.
+
+---
+
+## 10. Design Principles
 
 1. **No embeddings** — All retrieval is BM25 keyword search, deterministic and reproducible
-2. **Merkle-verified** — Every text node has SHA-256; document integrity is a Merkle tree
+2. **Merkle-verified** — Every text node has SHA-256; document integrity is a Merkle tree: `line → paragraph → column → page → document`
 3. **Fail-closed integrity** — Any hash/Merkle/citation check failure → reject the entire answer
 4. **Citation cascade** — GROBID (deterministic) → DSPy+LLM (fallback) → PDF metadata (last resort)
 5. **7 deterministic agents** — Fixed pipeline, no dynamic agent chaining
 6. **CJK-first** — Vertical text detection, CJK phrase preservation in search, pinyin indexing
-7. **Source-of-truth hierarchy** — Contracts first, then docs, then implementation, then legacy
-8. **Session memory** — JSONL per thread with Merkle DAG integrity; v12 adds Tantivy+SQLite
+7. **Source-of-truth hierarchy** — Contracts → Summary → Implementation → Legacy
+8. **Graceful degradation** — Every external service has a fallback path
 
 ---
 
-## 8. Test Coverage
+## 11. Test Coverage
 
-| Area | Tests | Status |
-|------|-------|--------|
-| Bibliography formatting | `tests/test_style.py` (2 tests) | ✅ |
-| Citation extraction | `citeindex/tests/test_citation.py` | In-package |
-| LLM extraction | `citeindex/tests/test_llm_extraction.py` | In-package |
-| CJK phrase search | `citeindex/tests/test_search_cjk_phrase.py` | In-package |
-| v12 runtime | `citeindex/tests/test_v12_runtime.py` | In-package |
-| Rust (in-file `#[cfg(test)]`) | State machine, Merkle, memory, storage, traces, API, CLI | ✅ |
-| Agent-harness | `test_full_e2e.py`, `test_core.py` | In-package |
-| **Integration/e2e** | No formal CI pipeline detected | ⚠️ |
+| Area | Tests | Location |
+|------|-------|----------|
+| ~~Bibliography formatting~~ ~~Citation extraction~~ ~~LLM extraction~~ ~~CJK phrase search~~ ~~v12 runtime~~ | Removed with Python package | ~~`citeagent/tests/`~~ (deleted) |
+| Plugin engine (TS) | merkle, search, crypto-engine, csl, corpus-loader, memory-store (jest) | `plugins/opencode-citeagent/src/engine/` |
+| Integration | 27 MCP handler smoke test | Manual |
 
----
+> **Note:** All Python test files (`test_style.py`, `test_citation.py`, `test_llm_extraction.py`, `test_search_cjk_phrase.py`, `test_v12_runtime.py`) were removed along with the `citeagent/` Python package. TypeScript unit/integration tests for the `CiteAgentEngine` should be written to cover equivalent functionality.
 
-## 9. Example Corpus
-
-The `corpus/` directory contains **243 ingested document folders**, primarily from the "光从东方来" (Light from the East) website covering Syriac studies, Eastern Orthodox theology, and Chinese classical texts. The `example/` directory has **56 CSL-JSON/YAML files** demonstrating the range of source types: academic papers, CJK classical texts, URL citations, YouTube videos, OCR manuscripts.
+**Gap**: No formal CI/CD pipeline detected. Tests must be run manually.
 
 ---
 
-*Report generated from project source analysis. Last updated: 2026-04-26.*
+## 12. Known Gaps & Priority
+
+| Priority | Item | Status |
+|---------|------|--------|
+| **P1 — High** | Claim extraction (LLM-based) | Regex-only |
+| **P1 — High** | Argument graph persistence (SQLite) | `ag_write_edge` removed; deferred to Rust kernel |
+| **P2 — Medium** | Contradiction detection (LLM-based) | Duplicate detection only |
+| **P2 — Medium** | CI/CD pipeline | None |
+| **P3 — Low** | Hierarchy classification (LLM-based) | 3-keyword classifier |
+| **P3 — Low** | Gap identification (LLM-based) | Threshold comparison |
+| **P3 — Low** | SafeHarness L4 (rollback) | Removed |
+| **P3 — Low** | Memory summarization | Removed |
+| **P4 — Deferred** | Embeddings/vector search | Design decision (deterministic-only) |
+| **P4 — Deferred** | PostgreSQL memory | JSONL fine for MVP |
+| **P4 — Deferred** | Rust kernel | Future goal |
+
+---
+
+## 13. Near-Term Direction
+
+Per `instruction/Summary.md`:
+
+1. Keep the v12 contracts canonical
+2. Implement remaining v12 agents with real LLM logic (claim extraction, contradiction detection, gap identification, hierarchy classification)
+3. Build out Tantivy index population at ingest time
+4. Consider SQLite-backed argument graph when `ag_write_edge` is needed
+5. Additional citation styles beyond Chicago
+6. Language-specific OCR improvements
+7. New ingestion pipelines (e.g., EPUB, LaTeX)
+
+---
+
+*Report generated from project source analysis. Last updated: 2026-05-01.*

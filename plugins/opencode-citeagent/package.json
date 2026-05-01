@@ -4,7 +4,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "citeagent-install": "dist/bin/install.js"
+    "citeagent-install": "dist/bin/install.js",
+    "citeagent-mcp-server": "dist/bin/mcp-server.js"
   },
   "files": [
     "dist/",
@@ -12,7 +13,7 @@
   ],
   "scripts": {
     "build": "bun build src/index.ts --outdir=dist --target=bun --format=esm",
-    "build:bin": "bun build bin/install.ts --outfile=dist/bin/install.js --target=bun --format=esm",
+    "build:bin": "bun build bin/install.ts --outfile=dist/bin/install.js --target=bun --format=esm && bun build bin/mcp-server.ts --outfile=dist/bin/mcp-server.js --target=bun --format=esm",
     "build:all": "bun run build && bun run build:bin",
     "prepublishOnly": "bun run build:all"
   },

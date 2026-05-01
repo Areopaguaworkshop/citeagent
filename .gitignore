@@ -1,22 +1,23 @@
-# test output
+# Test output
 test_output/
 
-# Python generated files
-__pycache__/
-*.py[oc]
-build/
+# Build output
 dist/
-wheels/
-*.egg-info
-tests/**/*
+
+# Environment
 .env
-# venv
 .venv
-# corpus
+
+# Corpus data
 corpus/**/*
-# instruction
+
+# Instruction data
 instruction/**/*
+
+# Docs
 docs/**/*
+
+# IDE / editor
 .vscode/
 .idea/
 *.swp

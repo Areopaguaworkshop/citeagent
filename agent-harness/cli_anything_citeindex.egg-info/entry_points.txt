@@ -1,0 +1,2 @@
+[console_scripts]
+cli-anything-citeindex = cli_anything.citeindex.citeindex_cli:main

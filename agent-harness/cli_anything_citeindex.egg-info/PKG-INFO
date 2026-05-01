@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: cli-anything-citeindex
+Version: 1.0.0
+Summary: CLI harness for CiteIndex — AI research knowledge infrastructure with Merkle-verified retrieval
+Requires-Python: >=3.12
+Requires-Dist: click>=8.0.0
+Requires-Dist: prompt-toolkit>=3.0.0
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
