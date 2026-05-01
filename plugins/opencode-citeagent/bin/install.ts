@@ -295,6 +295,10 @@ function generateAgentConfig(): void {
         color: "#9b59b6",
       },
     },
+    // Built-in MCP servers: websearch (Exa/Tavily), context7, grep_app.
+    // Add entries to this array to disable specific MCP servers globally.
+    // Example: ["websearch"] disables Exa/Tavily web search.
+    disabled_mcps: [],
   }
 
   if (!dryRun) {

@@ -1,8 +1,90 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
 import path from "path"
 import os from "os"
+import fs from "fs"
 import { execSync } from "child_process"
+
+// ── Built-in MCP server definitions ──────────────────────────────────────
+
+/** Descriptor for a built-in remote MCP server (SSE/HTTP-based). */
+export interface BuiltinMcpDef {
+  /** Unique key used in config and routing (e.g. "websearch"). */
+  key: string
+  /** Display name for log messages. */
+  name: string
+  /** Remote SSE endpoint URL. */
+  url: string
+  /** Environment variable names that provide API keys (checked in order). */
+  requiredEnvVars?: string[]
+  /** Optional environment variable names — no warning if missing. */
+  optionalEnvVars?: string[]
+  /** Custom headers to send with every request (e.g. x-api-key). */
+  headers?: () => Record<string, string>
+}
+
+/**
+ * Built-in MCP servers available alongside the Python backend.
+ * Each entry describes how to connect and what auth is needed.
+ */
+export const BUILTIN_MCPS: ReadonlyArray<BuiltinMcpDef> = [
+  {
+    key: "websearch",
+    name: "Exa Web Search",
+    url: "https://mcp.exa.ai/mcp?tools=web_search_exa",
+    requiredEnvVars: ["EXA_API_KEY", "TAVILY_API_KEY"],
+    headers: () => {
+      const key = process.env.EXA_API_KEY || process.env.TAVILY_API_KEY || ""
+      return key ? { "x-api-key": key } : {}
+    },
+  },
+  {
+    key: "context7",
+    name: "Context7 Docs",
+    url: "https://mcp.context7.com/mcp",
+    optionalEnvVars: ["CONTEXT7_API_KEY"],
+    headers: () => {
+      const key = process.env.CONTEXT7_API_KEY || ""
+      return key ? { Authorization: `Bearer ${key}` } : {}
+    },
+  },
+  {
+    key: "grep_app",
+    name: "Grep.app Code Search",
+    url: "https://mcp.grep.app",
+  },
+] as const
+
+// ── Config loading ───────────────────────────────────────────────────────
+
+interface CiteAgentConfig {
+  disabled_mcps?: string[]
+}
+
+/**
+ * Read ~/.config/opencode/citeagent.json and return the parsed config.
+ * Returns an empty config (all MCPs enabled) if the file doesn't exist.
+ */
+function loadConfig(): CiteAgentConfig {
+  const configPath = path.join(
+    os.homedir(),
+    ".config",
+    "opencode",
+    "citeagent.json",
+  )
+  try {
+    if (fs.existsSync(configPath)) {
+      const raw = fs.readFileSync(configPath, "utf-8")
+      return JSON.parse(raw) as CiteAgentConfig
+    }
+  } catch (err) {
+    console.warn("[CiteAgent] Failed to load config from", configPath, err)
+  }
+  return {}
+}
+
+// ── CiteAgentBridge (Python backend, unchanged) ──────────────────────────
 
 /**
  * CiteAgentBridge — plugin-owned subprocess that talks to the Python backend.
@@ -207,17 +289,209 @@ export class CiteAgentBridge {
   }
 }
 
-// ── Singleton ──────────────────────────────────────────────────────────
+// ── CiteAgentMcpManager ──────────────────────────────────────────────────
 
-let _bridge: CiteAgentBridge | null = null
-
-export function getBridge(projectDir: string): CiteAgentBridge {
-  if (!_bridge) {
-    _bridge = new CiteAgentBridge(projectDir)
-  }
-  return _bridge
+/** A connected built-in MCP client keyed by its definition key. */
+interface ConnectedMcp {
+  def: BuiltinMcpDef
+  client: Client
+  transport: SSEClientTransport
 }
 
+/**
+ * CiteAgentMcpManager — manages the Python bridge connection plus
+ * built-in remote MCP servers (websearch, context7, grep_app).
+ *
+ * Routing rules for callTool():
+ *   - Tool names starting with "cite_" → Python bridge
+ *   - Otherwise, route to the MCP whose definition matches the tool.
+ *     Since we don't know exact tool names for remote MCPs ahead of time,
+ *     we try each enabled built-in MCP in order and return the first
+ *     successful result.
+ */
+export class CiteAgentMcpManager {
+  /** The Python backend bridge. */
+  private bridge: CiteAgentBridge
+
+  /** Set of MCP keys to skip (loaded from config). */
+  readonly disabledMcps: Set<string>
+
+  /** Connected built-in MCP clients. */
+  private builtinConnections: Map<string, ConnectedMcp> = new Map()
+
+  constructor(projectDir: string) {
+    this.bridge = new CiteAgentBridge(projectDir)
+    const config = loadConfig()
+    this.disabledMcps = new Set(config.disabled_mcps ?? [])
+  }
+
+  /** Connect the Python bridge and all enabled built-in MCP servers. */
+  async connectAll(projectDir: string): Promise<void> {
+    // 1. Connect the Python backend (must succeed)
+    await this.bridge.connect()
+
+    // 2. Connect each enabled built-in MCP
+    for (const def of BUILTIN_MCPS) {
+      if (this.disabledMcps.has(def.key)) {
+        console.debug(`[CiteAgent] Skipping disabled MCP: ${def.key}`)
+        continue
+      }
+      await this.connectBuiltin(def)
+    }
+  }
+
+  /**
+   * Connect a single built-in MCP server.
+   * Logs a warning and continues on failure (non-fatal).
+   */
+  private async connectBuiltin(def: BuiltinMcpDef): Promise<void> {
+    // Check required environment variables
+    if (def.requiredEnvVars?.length) {
+      const hasRequired = def.requiredEnvVars.some(
+        (envVar) => process.env[envVar],
+      )
+      if (!hasRequired) {
+        console.warn(
+          `[CiteAgent] Skipping ${def.key} (${def.name}): missing required env var(s) ` +
+            def.requiredEnvVars.join(" or "),
+        )
+        return
+      }
+    }
+
+    try {
+      // Build transport with optional custom headers
+      const headers = def.headers?.() ?? {}
+      const transport = new SSEClientTransport(new URL(def.url), {
+        requestInit: Object.keys(headers).length > 0 ? { headers } : undefined,
+      })
+
+      const client = new Client({
+        name: "opencode-citeagent",
+        version: "0.3.2",
+      })
+
+      await client.connect(transport)
+      this.builtinConnections.set(def.key, { def, client, transport })
+      console.debug(`[CiteAgent] Connected built-in MCP: ${def.key} (${def.name})`)
+    } catch (err) {
+      console.warn(
+        `[CiteAgent] Failed to connect built-in MCP ${def.key} (${def.name}):`,
+        err instanceof Error ? err.message : err,
+      )
+    }
+  }
+
+  /** Disconnect all MCP connections (Python bridge + built-ins). */
+  async disconnectAll(): Promise<void> {
+    // Disconnect built-in MCPs
+    for (const [key, conn] of this.builtinConnections) {
+      try {
+        await conn.client.close()
+      } catch {
+        // ignore close errors
+      }
+    }
+    this.builtinConnections.clear()
+
+    // Disconnect Python bridge
+    await this.bridge.disconnect()
+  }
+
+  /**
+   * Call a tool on the appropriate MCP server.
+   *
+   * Routing:
+   *  - "cite_*" → Python bridge
+   *  - Otherwise → try each connected built-in MCP until one succeeds
+   *    (remote MCPs expose unique tool names, so only one will recognise it).
+   */
+  async callTool(
+    name: string,
+    args: Record<string, unknown>,
+  ): Promise<string> {
+    // Route cite_* tools to the Python bridge
+    if (name.startsWith("cite_")) {
+      return this.bridge.callTool(name, args)
+    }
+
+    // Try each connected built-in MCP
+    for (const [key, conn] of this.builtinConnections) {
+      try {
+        const result = await conn.client.callTool({ name, arguments: args })
+        return extractMcpText(result)
+      } catch (err) {
+        // If the server doesn't know this tool, try the next one
+        const msg = err instanceof Error ? err.message : String(err)
+        if (
+          msg.includes("not found") ||
+          msg.includes("unknown tool") ||
+          msg.includes("Method not found")
+        ) {
+          continue
+        }
+        // Auth/network errors — don't try further
+        throw err
+      }
+    }
+
+    throw new Error(
+      `CiteAgent: no MCP server recognized tool "${name}". ` +
+        `Connected: bridge + [${[...this.builtinConnections.keys()].join(", ")}]`,
+    )
+  }
+
+  /** Access the underlying Python bridge (for backward compat). */
+  getBridge(): CiteAgentBridge {
+    return this.bridge
+  }
+}
+
+// ── Helper: extract text from MCP CallToolResult ─────────────────────────
+
+function extractMcpText(result: unknown): string {
+  if (
+    result &&
+    typeof result === "object" &&
+    "content" in result &&
+    Array.isArray((result as any).content)
+  ) {
+    const content = (result as any).content
+    const textItem = content.find((c: any) => c.type === "text")
+    if (textItem?.text) return textItem.text
+  }
+  return JSON.stringify(result, null, 2)
+}
+
+// ── Singleton ────────────────────────────────────────────────────────────
+
+let _manager: CiteAgentMcpManager | null = null
+
+/** Get (or create) the global MCP manager singleton. */
+export function getMcpManager(projectDir: string): CiteAgentMcpManager {
+  if (!_manager) {
+    _manager = new CiteAgentMcpManager(projectDir)
+  }
+  return _manager
+}
+
+/**
+ * Convenience: get the Python bridge from the global manager.
+ * Backward-compatible with code that only used getBridge().
+ */
+export function getBridge(projectDir: string): CiteAgentBridge {
+  return getMcpManager(projectDir).getBridge()
+}
+
+/** Reset the global manager and all connections. */
+export function resetAll(): void {
+  _manager = null
+}
+
+/**
+ * @deprecated Use resetAll() instead. Only resets the Python bridge,
+ * not the built-in MCP connections.
+ */
 export function resetBridge(): void {
-  _bridge = null
+  _manager = null
 }

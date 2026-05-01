@@ -4,7 +4,9 @@
 
 ## What CiteAgent Gives You
 
-Once connected, you get tools for Merkle-verified academic research:
+Once connected, you get tools for Merkle-verified academic research plus built-in web search and code search:
+
+### CiteAgent Tools (Python backend)
 
 | Tool | What it does |
 |------|-------------|
@@ -35,6 +37,25 @@ Once connected, you get tools for Merkle-verified academic research:
 | `cite_crypto_audit_trail` | Return the audit chain for a session |
 | `cite_safeharness_check` | Run SafeHarness security layers on a tool call |
 | `cite_safeharness_sanitize` | Sanitize input for a tool call |
+
+### Built-in MCP Servers (OpenCode plugin only)
+
+When using the OpenCode plugin, these are auto-connected alongside the Python backend:
+
+| Server | Tool | What it does | Auth |
+|--------|------|-------------|------|
+| **websearch** | `web_search_exa` | Web search via Exa AI (or Tavily) | `EXA_API_KEY` or `TAVILY_API_KEY` |
+| **context7** | `resolve-library-id` | Library/package documentation lookup | Optional `CONTEXT7_API_KEY` |
+| **grep_app** | `search_code` | Search code across open-source GitHub repos | None |
+
+> **Note:** In non-OpenCode MCP clients (Claude Code, Codex, etc.), you need to add these MCP servers separately if desired. The OpenCode plugin auto-connects them.
+
+To disable any built-in MCP server, add it to the `disabled_mcps` array in `~/.config/opencode/citeagent.json`:
+
+```json
+{
+  "disabled_mcps": ["websearch", "context7"]
+}
 
 ## Prerequisites
 

@@ -81,6 +81,8 @@ Query → BM25 Retrieval → Ranked Evidence → Generation (LLM or extractive)
 
 ## Quick Start
 
+See [**install.md**](./install.md) for the full installation guide (human + LLM agent instructions, model selection, and troubleshooting).
+
 ### Installation
 
 ```bash
@@ -229,6 +231,7 @@ The `@ephremyuan/citeagent` npm package is an **OpenCode-specific plugin** that 
 
 - **5 specialized agents** — researcher, verifier, explore-corpus, ingestor, reviewer
 - **27 MCP tools** — `cite_search`, `cite_verify`, `cite_ingest`, `cite_render`, `cite_tree`, `cite_regex_search`, `cite_delete_document`, `cite_tantivy_search`, `cite_tantivy_index`, `cite_memory_*`, and more
+- **3 built-in MCP servers** — websearch (Exa), context7 (docs), grep_app (code search) — auto-connected
 - **Skill & rule assets** auto-deployed on install
 - **Hooks** — SafeHarness (sanitize + permission tiers), verification ladder (L0–L4), crypto audit chain
 
