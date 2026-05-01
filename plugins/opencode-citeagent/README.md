@@ -25,8 +25,12 @@ The installer automatically:
 ## Prerequisites
 
 ```bash
-# Required: Python + citeindex
-pip install citeindex
+# Required: Python + citeindex (via uv tool — isolated, no venv needed)
+uv tool install citeagent
+uv tool install citeindex
+
+# Verify
+python3 -c "import citeagent" && citeindex --version
 
 # Optional: OCR support
 sudo apt install tesseract-ocr
@@ -47,9 +51,9 @@ sudo apt install tesseract-ocr
 |-------|------|-------------|
 | `citeagent-researcher` | primary | Academic research with citation-verified evidence |
 | `citeagent-verifier` | subagent (hidden) | Independent Merkle proof audit |
-| `citeagent-explore-corpus` | subagent | Fast corpus search and browsing |
-| `citeagent-ingestor` | subagent | Document ingestion (PDF, URL, media) |
-| `citeagent-reviewer` | subagent | Systematic literature review |
+| `citeagent-explore-corpus` | subagent (hidden) | Fast corpus search and browsing |
+| `citeagent-ingestor` | subagent (hidden) | Document ingestion (PDF, URL, media) |
+| `citeagent-reviewer` | subagent (hidden) | Systematic literature review |
 
 ## Tools
 
@@ -80,7 +84,7 @@ citeagent-researcher (OpenCode agent)
      └── @citeagent-verifier (OpenCode subagent)
 ```
 
-The plugin spawns `python3 -m citeindex.mcp_server` as a subprocess and communicates via MCP over stdio.
+The plugin spawns `python3 -m citeagent.mcp_server` as a subprocess and communicates via MCP over stdio. The OpenCode plugin auto-detects the Python runtime from `uv tool install` paths.
 
 ## License
 

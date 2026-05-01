@@ -59,17 +59,17 @@ To disable any built-in MCP server, add it to the `disabled_mcps` array in `~/.c
 
 ## Prerequisites
 
-Install both packages:
+Install both packages via `uv tool`:
 
 ```bash
 # CiteAgent (research agent runtime + MCP server)
-pip install citeagent
+uv tool install citeagent
 
 # CiteIndex (ingestion engine, required for cite_ingest)
-pip install citeindex
-# or for global CLI:
 uv tool install citeindex
 ```
+
+> **`uv tool install`** provides isolated, globally-available CLI tools without polluting your system Python. No venv or `pip install` needed.
 
 Verify:
 
@@ -277,8 +277,8 @@ Priority: `CITEAGENT_PYTHON` env → project `.venv/bin/python3` → `~/.rye/py/
 | Problem | Cause | Fix |
 |---------|-------|-----|
 | `Connection error (-32000)` | Python process crashed or `citeagent` not installed | Run `python3 -c "import citeagent"` to verify |
-| `No module named citeagent.mcp_server` | Old version or wrong package | `pip install --upgrade citeagent` |
-| `cite_ingest` fails | `citeindex` not installed (separate ingestion package) | `pip install citeindex` or `uv tool install citeindex` |
+| `No module named citeagent.mcp_server` | Old version or wrong package | `uv tool install --force citeagent` |
+| `cite_ingest` fails | `citeindex` not installed (separate ingestion package) | `uv tool install citeindex` |
 | `tesseract not found` | OCR not installed | `sudo apt install tesseract-ocr` or `brew install tesseract` |
 | Tools don't appear | MCP server not started or config path wrong | Restart the tool; check config file path |
 | `CITEAGENT_CORPUS_ROOT` errors | Corpus directory doesn't exist | Create it: `mkdir -p corpus` |

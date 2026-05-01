@@ -38,8 +38,11 @@ CiteAgent provides 5 purpose-built agents for OpenCode:
 ### 1. Install Python packages
 
 ```bash
-pip install citeagent citeindex
+uv tool install citeagent
+uv tool install citeindex
 ```
+
+> **`uv tool install`** provides isolated, globally-available CLI tools without polluting your system Python. No venv needed — `uv` manages its own environments under `~/.local/share/uv/tools/`.
 
 ### 2. Install system dependencies
 
@@ -89,7 +92,7 @@ For Claude Code, Codex, Cursor, Cline, and Windsurf — see [**mcp-setup.md**](.
 ### 6. Verify installation
 
 ```bash
-python3 -c "import citeagent" && citeagent --version
+python3 -c "import citeagent" && citeagent --version && citeindex --version
 ```
 
 ---
@@ -111,8 +114,11 @@ Configure based on their choice.
 ### Step 1 — Install packages
 
 ```bash
-pip install citeagent citeindex
+uv tool install citeagent
+uv tool install citeindex
 ```
+
+> `uv tool install` creates isolated environments under `~/.local/share/uv/tools/` — no venv or system Python pollution.
 
 ### Step 2 — Install system dependencies
 
@@ -164,7 +170,7 @@ For Claude Code, Codex, Cursor, Cline, or Windsurf configurations, refer the use
 Confirm everything works:
 
 ```bash
-python3 -c "import citeagent" && citeagent --version
+python3 -c "import citeagent" && citeagent --version && citeindex --version
 ```
 
 If both succeed, CiteAgent is installed and ready.

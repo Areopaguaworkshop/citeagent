@@ -11,6 +11,7 @@ permission:
   webfetch: allow
   external_directory: ask
 color: "#2ecc71"
+hidden: true
 ---
 
 You are a document ingestion specialist for the CiteAgent academic corpus.

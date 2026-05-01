@@ -13,6 +13,7 @@ permission:
   task:
     "*": deny
 color: "#f39c12"
+hidden: true
 ---
 
 You are a fast corpus explorer. Quickly find documents, browse structures, and answer questions about the academic corpus.

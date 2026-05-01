@@ -48,7 +48,7 @@ The live execution path runs on the v12 NDJSON agent runtime, powered by the `ci
 
 - **`citeagent`** (v0.4.0) — the research agent runtime: 7-stage search/chat pipeline, MCP server with 27 tools, Tantivy full-text indexes, integrity verification, memory, and agent orchestration.
 - **`citeindex`** (v0.12.0+) — the ingestion engine (separate PyPI package): PDF, URL, media, DJVU, Office document ingestion with GROBID, MinerU, DSPy, and Merkle verification.
-- The OpenCode plugin (`@ephremyuan/citeagent` v0.3.6 on npm) provides 5 specialized agents, skills, rules, and SafeHarness security hooks.
+- The OpenCode plugin (`@ephremyuan/citeagent` v0.3.8 on npm) provides 5 specialized agents, skills, rules, and SafeHarness security hooks.
 - MCP server runs as `python3 -m citeagent.mcp_server` and works with Claude Code, Codex, Cursor, Cline, and Windsurf.
 
 ---
@@ -87,7 +87,7 @@ See [**install.md**](./install.md) for the full installation guide (human + LLM 
 
 ```bash
 # CiteAgent — research agent runtime + MCP server
-pip install citeagent
+uv tool install citeagent
 
 # CiteIndex — ingestion engine (required for cite_ingest)
 uv tool install citeindex
@@ -95,6 +95,8 @@ uv tool install citeindex
 # OpenCode plugin — agents, skills, hooks (recommended for OpenCode users)
 bunx @ephremyuan/citeagent@latest install
 ```
+
+> **`uv tool install`** provides isolated, globally-available CLI tools without polluting your system Python. No venv needed — `uv` manages its own environments under `~/.local/share/uv/tools/`. The OpenCode plugin auto-detects this path.
 
 > **See [plugins/opencode-citeagent/README.md](./plugins/opencode-citeagent/README.md)** for full plugin details — agents, tools, architecture, and uninstall steps.
 
@@ -324,8 +326,8 @@ The `.citeindex/` tree is now the runtime source of truth. The legacy folders re
 git clone https://github.com/Areopaguaworkshop/citeagent.git
 cd citeagent
 
-# Python development
-pip install -e ".[dev]"
+# Development setup with uv
+uv tool install -e ".[dev]"
 pytest
 ```
 
@@ -351,7 +353,7 @@ If you use CiteAgent in academic work, please cite:
   title = {CiteAgent: AI Research Agent with Merkle-Verified Retrieval and Citation-Indexed Search},
   year = {2025},
   url = {https://github.com/Areopaguaworkshop/citeagent},
-  note = {Python package: citeagent v0.4.0, citeindex v0.12.0, npm package: @ephremyuan/citeagent v0.3.6}
+  note = {Python package: citeagent v0.4.0, citeindex v0.12.0, npm package: @ephremyuan/citeagent v0.3.8}
 }
 ```
 

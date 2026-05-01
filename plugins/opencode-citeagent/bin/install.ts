@@ -72,7 +72,7 @@ function checkPrerequisites(): boolean {
   }
   if (!citeagentFound) {
     console.error("❌ citeagent not found. Install with:")
-    console.error("     pip install citeagent       (into active venv)")
+    console.error("     uv tool install citeagent   (recommended, isolated global CLI)")
     ok = false
   }
 
@@ -100,8 +100,7 @@ function checkPrerequisites(): boolean {
   }
   if (!citeindexFound) {
     console.warn("⚠️  citeindex not found (needed for document ingestion). Install with:")
-    console.warn("     uv tool install citeindex   (recommended, global CLI)")
-    console.warn("     pip install citeindex       (into active venv)")
+    console.warn("     uv tool install citeindex   (recommended, isolated global CLI)")
   }
 
   // Check tesseract (optional)
@@ -314,7 +313,7 @@ function printNextSteps(): void {
   console.log("🔬 CiteAgent for OpenCode — Installation Complete")
   console.log("───────────────────────────────────────────────────")
   console.log("\nNext steps:")
-  console.log("  1. Ensure Python citeindex is installed: pip install citeindex")
+  console.log("  1. Ensure Python citeindex is installed: uv tool install citeindex")
   console.log("  2. (Optional) Install OCR: sudo apt install tesseract-ocr")
   console.log("  3. (Optional) Install LLM backend: https://ollama.ai")
   console.log("  4. Restart OpenCode to activate the plugin")

@@ -1,7 +1,7 @@
 """
 CiteAgent — AI research agent for academic scholars.
 
-Ingestion is handled by the separate `citeindex` package (pip install citeindex).
+Ingestion is handled by the separate `citeindex` package (uv tool install citeindex).
 This package provides search, retrieval, chat, integrity verification,
 memory, and agent runtime capabilities.
 """
