@@ -45,65 +45,18 @@ function log(msg: string) {
 function checkPrerequisites(): boolean {
   let ok = true
 
-  // Check Python3
-  try {
-    execSync("python3 --version", { stdio: "pipe" })
-    console.log("✅ Python3 found")
-  } catch {
-    console.error("❌ Python3 not found. Install Python 3.12+ first.")
-    ok = false
-  }
+  console.log("ℹ️  Python3 not required — CiteAgent runs natively in TypeScript")
 
-  // Check citeagent module (the research agent runtime)
-  let citeagentFound = false
-  try {
-    execSync('python3 -c "import citeagent"', { stdio: "pipe", timeout: 10000 })
-    console.log("✅ Python citeagent package found")
-    citeagentFound = true
-  } catch {
-    try {
-      const venvPython = join(process.cwd(), ".venv", "bin", "python3")
-      execSync(`"${venvPython}" -c "import citeagent"`, { stdio: "pipe", timeout: 10000 })
-      console.log("✅ Python citeagent package found (project .venv)")
-      citeagentFound = true
-    } catch {
-      // not found
-    }
-  }
-  if (!citeagentFound) {
-    console.error("❌ citeagent not found. Install with:")
-    console.error("     uv tool install citeagent   (recommended, isolated global CLI)")
-    ok = false
-  }
-
-  // Check citeindex module (the ingestion engine, required for cite ingest)
   let citeindexFound = false
   try {
     execSync("command -v citeindex", { stdio: "pipe", timeout: 10000, shell: "/bin/sh" })
-    console.log("✅ Python citeindex package found (CLI on PATH)")
+    console.log("✅ Python citeindex found (CLI on PATH, for document ingestion)")
     citeindexFound = true
   } catch {
-    try {
-      execSync('python3 -c "import citeindex"', { stdio: "pipe", timeout: 10000 })
-      console.log("✅ Python citeindex package found (system python)")
-      citeindexFound = true
-    } catch {
-      try {
-        const venvPython2 = join(process.cwd(), ".venv", "bin", "python3")
-        execSync(`"${venvPython2}" -c "import citeindex"`, { stdio: "pipe", timeout: 10000 })
-        console.log("✅ Python citeindex package found (project .venv)")
-        citeindexFound = true
-      } catch {
-        // not found
-      }
-    }
-  }
-  if (!citeindexFound) {
-    console.warn("⚠️  citeindex not found (needed for document ingestion). Install with:")
-    console.warn("     uv tool install citeindex   (recommended, isolated global CLI)")
+    console.warn("⚠️  citeindex not found (optional, needed only for document ingestion). Install with:")
+    console.warn("     uv tool install citeindex")
   }
 
-  // Check tesseract (optional)
   try {
     execSync("tesseract --version", { stdio: "pipe" })
     console.log("✅ Tesseract OCR found (optional)")
@@ -111,7 +64,6 @@ function checkPrerequisites(): boolean {
     console.warn("⚠️  Tesseract not found (optional, needed for OCR): sudo apt install tesseract-ocr")
   }
 
-  // Check ollama (optional)
   try {
     execSync("ollama --version", { stdio: "pipe" })
     console.log("✅ Ollama found (for LLM features)")
@@ -313,7 +265,7 @@ function printNextSteps(): void {
   console.log("🔬 CiteAgent for OpenCode — Installation Complete")
   console.log("───────────────────────────────────────────────────")
   console.log("\nNext steps:")
-  console.log("  1. Ensure Python citeindex is installed: uv tool install citeindex")
+  console.log("  1. (Optional) Install citeindex for document ingestion: uv tool install citeindex")
   console.log("  2. (Optional) Install OCR: sudo apt install tesseract-ocr")
   console.log("  3. (Optional) Install LLM backend: https://ollama.ai")
   console.log("  4. Restart OpenCode to activate the plugin")

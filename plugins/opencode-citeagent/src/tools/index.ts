@@ -1,19 +1,15 @@
 import { tool } from "@opencode-ai/plugin"
-import { getBridge } from "../mcp-bridge.js"
+import { getMcpManager } from "../mcp-bridge.js"
 
 const z = tool.schema
 
 export async function createCiteAgentTools(ctx: { directory: string }) {
-  const bridge = getBridge(ctx.directory)
-  await bridge.connect()
+  const manager = getMcpManager(ctx.directory)
 
-  // Helper: call Python backend and return text
   const call = (name: string, args: Record<string, unknown>) =>
-    bridge.callTool(name, args)
+    manager.callTool(`cite_${name}`, args)
 
   return {
-    // ── Academic Core ──────────────────────────────────
-
     cite_search: tool({
       description:
         "BM25 full-text search on the academic corpus. Returns ranked document nodes with citation metadata and Merkle hashes.",
@@ -22,7 +18,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         limit: z.number().default(10).describe("Maximum results to return"),
       },
       async execute({ query, limit }) {
-        return call("search_documents", { query, limit })
+        return manager.callTool("cite_search_documents", { query, limit })
       },
     }),
 
@@ -31,7 +27,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         "Search claims in the argument graph. Returns claim nodes with contradiction and support links.",
       args: { query: z.string().describe("Claim search query") },
       async execute({ query }) {
-        return call("search_claims", { query })
+        return manager.callTool("cite_search_claims", { query })
       },
     }),
 
@@ -48,7 +44,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         root: z.string().describe("Document Merkle root hash"),
       },
       async execute({ node_hash, proof, root }) {
-        return call("merkle_verify", { node_hash, proof, root })
+        return manager.callTool("cite_merkle_verify", { node_hash, proof, root })
       },
     }),
 
@@ -63,7 +59,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
           .describe("Citation style ID"),
       },
       async execute({ citation_key, style }) {
-        return call("csl_render", { citation_key, style })
+        return manager.callTool("cite_csl_render", { citation_key, style })
       },
     }),
 
@@ -78,7 +74,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
           .describe("Force re-ingestion if already indexed"),
       },
       async execute({ path, force }) {
-        return call("index_document", { path, force })
+        return manager.callTool("cite_index_document", { path, force })
       },
     }),
 
@@ -89,7 +85,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         source_id: z.string().describe("Document source ID"),
       },
       async execute({ source_id }) {
-        return call("tree_load", { source_id })
+        return manager.callTool("cite_tree_load", { source_id })
       },
     }),
 
@@ -100,7 +96,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         source_id: z.string().describe("Document source ID"),
       },
       async execute({ source_id }) {
-        return call("tree_traverse", { source_id })
+        return manager.callTool("cite_tree_traverse", { source_id })
       },
     }),
 
@@ -116,7 +112,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
           .describe("Tags for retrieval"),
       },
       async execute({ content, thread, tags }) {
-        return call("memory_save", { content, thread, tags })
+        return manager.callTool("cite_memory_save", { content, thread, tags })
       },
     }),
 
@@ -127,7 +123,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         query: z.string().describe("Search query"),
       },
       async execute({ query }) {
-        return call("search_memory", { query })
+        return manager.callTool("cite_search_memory", { query })
       },
     }),
 
@@ -146,12 +142,10 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
       },
       async execute({ claim_id, find_contradictions }) {
         if (find_contradictions)
-          return call("ag_query_contradictions", { claim_id })
-        return call("ag_query_claims", { claim_id })
+          return manager.callTool("cite_ag_query_contradictions", { claim_id })
+        return manager.callTool("cite_ag_query_claims", { claim_id })
       },
     }),
-
-    // ── Extended Academic ──────────────────────────────
 
     cite_regex_search: tool({
       description:
@@ -164,7 +158,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
           .describe("Limit search to this node"),
       },
       async execute({ pattern, node_id }) {
-        return call("regex_search", { pattern, node_id })
+        return manager.callTool("cite_regex_search", { pattern, node_id })
       },
     }),
 
@@ -176,7 +170,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
           source_id: z.string().describe("Source document ID"),
         },
       async execute({ claim_text, source_id }) {
-        return call("index_claim", { claim_text, source_id })
+        return manager.callTool("cite_index_claim", { claim_text, source_id })
       },
     }),
 
@@ -187,7 +181,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         source_id: z.string().describe("Document source ID to delete"),
       },
       async execute({ source_id }) {
-        return call("delete_document", { source_id })
+        return manager.callTool("cite_delete_document", { source_id })
       },
     }),
 
@@ -198,7 +192,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         payload: z.string().describe("Payload to hash (JSON string or text)"),
       },
       async execute({ payload }) {
-        return call("merkle_compute", { payload })
+        return manager.callTool("cite_merkle_compute", { payload })
       },
     }),
 
@@ -209,7 +203,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         path: z.string().describe("File path to index"),
       },
       async execute({ path }) {
-        return call("tantivy_index", { path })
+        return manager.callTool("cite_tantivy_index", { path })
       },
     }),
 
@@ -220,11 +214,9 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         query: z.string().describe("Tantivy search query"),
       },
       async execute({ query }) {
-        return call("tantivy_search", { query })
+        return manager.callTool("cite_tantivy_search", { query })
       },
     }),
-
-    // ── Audit ──────────────────────────────────────────
 
     cite_audit_save: tool({
       description:
@@ -248,7 +240,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
           .describe("Original query being audited"),
       },
       async execute({ audit_id, verdict, reasoning, evidence_hashes, query }) {
-        return call("audit_save", {
+        return manager.callTool("cite_audit_save", {
           audit_id,
           verdict,
           reasoning,
@@ -264,11 +256,9 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         audit_id: z.string().describe("Audit identifier to retrieve"),
       },
       async execute({ audit_id }) {
-        return call("audit_retrieve", { audit_id })
+        return manager.callTool("cite_audit_retrieve", { audit_id })
       },
     }),
-
-    // ── Memory Tiers ───────────────────────────────────
 
     cite_memory_store_tier: tool({
       description:
@@ -293,7 +283,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
           .describe("Evidence source IDs"),
       },
       async execute({ content, tier, key, tags, thread_id, source_ids }) {
-        return call("memory_store_tier", {
+        return manager.callTool("cite_memory_store_tier", {
           content,
           tier,
           key,
@@ -313,7 +303,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         limit: z.number().default(10).describe("Max results"),
       },
       async execute({ query, tier, limit }) {
-        return call("memory_retrieve_tier", { query, tier, limit })
+        return manager.callTool("cite_memory_retrieve_tier", { query, tier, limit })
       },
     }),
 
@@ -327,11 +317,9 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
           .describe("Thread to consolidate"),
       },
       async execute({ thread_id }) {
-        return call("memory_consolidate", { thread_id })
+        return manager.callTool("cite_memory_consolidate", { thread_id })
       },
     }),
-
-    // ── Cryptographic ──────────────────────────────────
 
     cite_crypto_sign: tool({
       description:
@@ -341,7 +329,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         session_id: z.string().describe("Session identifier"),
       },
       async execute({ message, session_id }) {
-        return call("crypto_sign", { message, session_id })
+        return manager.callTool("cite_crypto_sign", { message, session_id })
       },
     }),
 
@@ -353,7 +341,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         session_id: z.string().describe("Session identifier"),
       },
       async execute({ message, signature, session_id }) {
-        return call("crypto_verify", { message, signature, session_id })
+        return manager.callTool("cite_crypto_verify", { message, signature, session_id })
       },
     }),
 
@@ -363,11 +351,9 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         session_id: z.string().describe("Session identifier"),
       },
       async execute({ session_id }) {
-        return call("crypto_audit_trail", { session_id })
+        return manager.callTool("cite_crypto_audit_trail", { session_id })
       },
     }),
-
-    // ── SafeHarness ─────────────────────────────────────
 
     cite_safeharness_check: tool({
       description:
@@ -380,7 +366,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
           .describe("Tool arguments"),
       },
       async execute({ tool_name, args }) {
-        return call("safeharness_check", {
+        return manager.callTool("cite_safeharness_check", {
           tool_name,
           args: args ?? {},
         })
@@ -395,7 +381,7 @@ export async function createCiteAgentTools(ctx: { directory: string }) {
         input: z.record(z.unknown()).describe("Input to sanitize"),
       },
       async execute({ tool_name, input }) {
-        return call("safeharness_sanitize", { tool_name, input })
+        return manager.callTool("cite_safeharness_sanitize", { tool_name, input })
       },
     }),
 

@@ -5,36 +5,68 @@ import type { RiskTier, ToolPermission, SecurityCheckResult, StateCheckpoint, Pr
 // ---------------------------------------------------------------------------
 
 const DEFAULT_TOOL_PERMISSIONS: ToolPermission[] = [
-  // read tier (auto-approve)
+  // read tier (auto-approve) — both engine names and cite_ prefixed names
   { tool_name: "search_documents", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_search", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "search_claims", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_search_claims", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "search_memory", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_search_memory", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "tree_load", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_tree", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "tree_traverse", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_tree_traverse", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "csl_render", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_render", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "merkle_verify", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_verify", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "ag_query_claims", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_argument_query", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "ag_query_contradictions", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "audit_retrieve", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_audit_retrieve", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "memory_retrieve_tier", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_memory_retrieve_tier", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "crypto_audit_trail", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_crypto_audit_trail", risk_tier: "read", requires_approval: false, sandbox_required: false },
 
   // workspace tier (auto-approve)
   { tool_name: "index_claim", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_index_claim", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
   { tool_name: "memory_save", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_memory_save", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
   { tool_name: "memory_store_tier", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_memory_store_tier", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
   { tool_name: "memory_consolidate", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_memory_consolidate", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
   { tool_name: "memory_summarize", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
   { tool_name: "merkle_compute", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_merkle_compute", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "audit_save", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_audit_save", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "crypto_sign", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_crypto_sign", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "crypto_verify", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_crypto_verify", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "safeharness_check", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_safeharness_check", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "safeharness_sanitize", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_safeharness_sanitize", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
 
   // network tier (needs approval)
   { tool_name: "index_document", risk_tier: "network", requires_approval: true, sandbox_required: false },
+  { tool_name: "cite_ingest", risk_tier: "network", requires_approval: true, sandbox_required: false },
   { tool_name: "tantivy_search", risk_tier: "network", requires_approval: true, sandbox_required: false },
+  { tool_name: "cite_tantivy_search", risk_tier: "network", requires_approval: true, sandbox_required: false },
 
   // system tier (always needs approval)
   { tool_name: "delete_document", risk_tier: "system", requires_approval: true, sandbox_required: true },
+  { tool_name: "cite_delete_document", risk_tier: "system", requires_approval: true, sandbox_required: true },
   { tool_name: "ag_write_edge", risk_tier: "system", requires_approval: true, sandbox_required: true },
   { tool_name: "tantivy_index", risk_tier: "system", requires_approval: true, sandbox_required: true },
+  { tool_name: "cite_tantivy_index", risk_tier: "system", requires_approval: true, sandbox_required: true },
   { tool_name: "regex_search", risk_tier: "system", requires_approval: true, sandbox_required: true },
+  { tool_name: "cite_regex_search", risk_tier: "system", requires_approval: true, sandbox_required: true },
 ];
 
 // ---------------------------------------------------------------------------

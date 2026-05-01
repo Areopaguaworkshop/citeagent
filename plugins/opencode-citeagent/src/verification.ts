@@ -1,46 +1,41 @@
-import { CiteAgentBridge } from "./mcp-bridge.js";
+import { getMcpManager } from "./mcp-bridge.js";
 import type { EvidenceItem, VerificationResult, VerificationLadderResult } from "./types.js";
 
 export class VerificationLadder {
-  private bridge: CiteAgentBridge;
+  private directory: string;
 
-  constructor(bridge: CiteAgentBridge) {
-    this.bridge = bridge;
+  constructor(directory: string) {
+    this.directory = directory;
   }
 
   async run(evidence: EvidenceItem[]): Promise<VerificationLadderResult> {
     const rungs: VerificationResult[] = [];
 
     for (const item of evidence) {
-      // L0: Schema check — verify that required fields are present
       const l0 = this.l0SchemaCheck(item);
       rungs.push(l0);
       if (!l0.passed) {
         return { overall: "rejected", rungs, evidence };
       }
 
-      // L1: Node existence — verify the node exists in the citation tree
       const l1 = await this.l1NodeExistence(item);
       rungs.push(l1);
       if (!l1.passed) {
         return { overall: "rejected", rungs, evidence };
       }
 
-      // L2: Hash match — verify the SHA-256 hash matches
       const l2 = await this.l2HashMatch(item);
       rungs.push(l2);
       if (!l2.passed) {
         return { overall: "rejected", rungs, evidence };
       }
 
-      // L3: Merkle proof — verify the Merkle proof is valid
       const l3 = await this.l3MerkleProof(item);
       rungs.push(l3);
       if (!l3.passed) {
         return { overall: "rejected", rungs, evidence };
       }
 
-      // L4: Citation key — verify the citation renders correctly
       const l4 = await this.l4CitationKey(item);
       rungs.push(l4);
       if (!l4.passed) {
@@ -48,21 +43,16 @@ export class VerificationLadder {
       }
     }
 
-    // L0-L4 passed — L5 runs asynchronously in a separate audit step
     return { overall: "pending_audit", rungs, evidence };
   }
 
-  /**
-   * L5: LLM Audit — independent-context LLM reviews evidence against the original query.
-   * Uses a FRESH context (no conversation history) to prevent self-approval of fabricated evidence.
-   */
   async l5LlmAudit(
     originalQuery: string,
     evidence: EvidenceItem[],
   ): Promise<VerificationResult> {
     const evidenceSummary = evidence
       .map(
-        (e) =
+        (e) =>
           `Node ${e.node_id}: hash=${e.sha256?.substring(0, 16)}… key=${e.citation_key}`,
       )
       .join("\n");
@@ -149,7 +139,8 @@ export class VerificationLadder {
     item: EvidenceItem,
   ): Promise<VerificationResult> {
     try {
-      const result = await this.bridge.callTool("tree_traverse", {
+      const manager = getMcpManager(this.directory);
+      const result = await manager.callTool("cite_tree_traverse", {
         node_id: item.node_id,
       });
 
@@ -179,7 +170,8 @@ export class VerificationLadder {
     item: EvidenceItem,
   ): Promise<VerificationResult> {
     try {
-      const result = await this.bridge.callTool("regex_search", {
+      const manager = getMcpManager(this.directory);
+      const result = await manager.callTool("cite_regex_search", {
         pattern: item.sha256,
       });
 
@@ -209,7 +201,8 @@ export class VerificationLadder {
     item: EvidenceItem,
   ): Promise<VerificationResult> {
     try {
-      const result = await this.bridge.callTool("merkle_verify", {
+      const manager = getMcpManager(this.directory);
+      const result = await manager.callTool("cite_merkle_verify", {
         node_id: item.node_id,
         proof: item.merkle_proof,
       });
@@ -247,7 +240,8 @@ export class VerificationLadder {
     item: EvidenceItem,
   ): Promise<VerificationResult> {
     try {
-      const result = await this.bridge.callTool("csl_render", {
+      const manager = getMcpManager(this.directory);
+      const result = await manager.callTool("cite_csl_render", {
         citation_key: item.citation_key,
       });
 

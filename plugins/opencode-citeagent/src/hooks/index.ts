@@ -1,4 +1,3 @@
-import { getBridge } from "../mcp-bridge.js"
 import { VerificationLadder } from "../verification.js"
 import { SafeHarness } from "../safeharness.js"
 import { LTLMonitor } from "../ltl-monitor.js"
@@ -17,7 +16,6 @@ export async function createCiteAgentHooks(ctx: {
     "tool.execute.before": async (input, _output) => {
       const toolName = input.tool
 
-      // SafeHarness Layer 3: Constrain — check tool permission
       const permCheck = safeharness.checkPermission(toolName)
       if (!permCheck.allowed) {
         console.warn(
@@ -26,13 +24,11 @@ export async function createCiteAgentHooks(ctx: {
         return
       }
 
-      // SafeHarness Layer 1: Inform — sanitize input
       const sanitized = safeharness.sanitizeInput(toolName, input.args ?? {})
       if (sanitized.sanitized_input) {
         input.args = sanitized.sanitized_input
       }
 
-      // LTL Monitor: check transition
       const transition = monitor.transition({
         type: "tool_call",
         tool_name: toolName,
@@ -50,7 +46,6 @@ export async function createCiteAgentHooks(ctx: {
         return
       }
 
-      // Crypto: add to audit chain
       crypto.addToAuditChain("request", toolName, input.args ?? {})
     },
 
@@ -58,7 +53,6 @@ export async function createCiteAgentHooks(ctx: {
       const out = output.output ?? ""
       const toolName = String(_input.tool ?? "unknown")
 
-      // SafeHarness Layer 2: Verify — check result validity
       const verifyResult = safeharness.tieredVerify(
         toolName,
         _input.args ?? {},
@@ -70,11 +64,9 @@ export async function createCiteAgentHooks(ctx: {
         )
       }
 
-      // Crypto: add response to audit chain
       crypto.addToAuditChain("response", toolName, {
         output: String(out).substring(0, 100),
       })
-      // Create execution receipt
       try {
         const receipt = crypto.createExecutionReceipt(
           toolName,
@@ -85,13 +77,10 @@ export async function createCiteAgentHooks(ctx: {
           `[CiteAgent] Execution receipt: ${receipt.receipt_id} tool=${toolName}`,
         )
       } catch {
-        // Receipt creation may fail for non-serializable outputs — skip
       }
 
-      // SafeHarness Layer 4: Correct — checkpoint after writes
       safeharness.checkpoint(toolName, JSON.stringify(_input.args ?? {}))
 
-      // Verification ladder for evidence-bearing outputs
       if (out.includes("merkle_proof") && out.includes("sha256")) {
         try {
           const parsed = JSON.parse(out)
@@ -101,8 +90,7 @@ export async function createCiteAgentHooks(ctx: {
               "merkle_proof" in item && "sha256" in item,
           )
           if (evidenceItems.length > 0) {
-            const bridge = getBridge(ctx.directory)
-            const ladder = new VerificationLadder(bridge)
+            const ladder = new VerificationLadder(ctx.directory)
             const result = await ladder.run(evidenceItems)
             console.log(
               "[CiteAgent] Verification ladder result:",
@@ -110,7 +98,6 @@ export async function createCiteAgentHooks(ctx: {
             )
           }
         } catch {
-          // Failed to parse or verify — skip silently
         }
       }
     },
@@ -120,7 +107,6 @@ export async function createCiteAgentHooks(ctx: {
         "## CiteAgent Academic Context\n- Preserve all citation keys and Merkle proof chains\n- Never compact evidence items with unverifiable hashes\n- Maintain CSL registry references across compaction\n- Keep verification ladder results for active evidence",
       )
 
-      // LTL: check liveness at compaction
       const violations = monitor.checkLiveness()
       if (violations.length > 0) {
         output.context.push(
@@ -128,7 +114,6 @@ export async function createCiteAgentHooks(ctx: {
         )
       }
 
-      // Crypto: log audit trail summary
       const trail = crypto.getAuditTrail()
       if (trail.entries.length > 0) {
         output.context.push(
