@@ -184,7 +184,7 @@ This deploys the plugin plus skills, agent configs, rules, and model mappings. T
 
 ---
 
-## Custom Corpus Root
+## Verify the Connection
 
 After adding the MCP server, restart your tool and check that CiteAgent tools appear:
 
