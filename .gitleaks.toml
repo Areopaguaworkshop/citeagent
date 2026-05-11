@@ -1,0 +1,17 @@
+# Gitleaks configuration for CiteAgent
+# Docs: https://github.com/gitleaks/gitleaks
+
+title = "CiteAgent Secret Scan"
+
+[extend]
+# Use default rules as base
+useDefault = true
+
+[allowlist]
+  description = "Global allowlist for placeholders, tests, and examples"
+  paths = [
+    '''\.env\.example$''',
+    '''tests?/.*''',
+    '''agent-harness/tests?/.*''',
+    '''example/.*'''
+  ]
