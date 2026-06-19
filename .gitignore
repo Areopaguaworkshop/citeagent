@@ -48,3 +48,5 @@ logs/
 .coverage
 htmlcov/
 .pytest_cache/
+# CocoIndex Code (ccc)
+/.cocoindex_code/
