@@ -1,0 +1,35 @@
+# ponytail: single-dev defaults. tuned for one author reviewing their own PRs.
+# Auto-runs /describe, /review, /improve on PR open/reopen/ready-for-review.
+# Comment any tool (/review, /improve, /describe, /ask ...) on the PR to re-run on demand.
+name: PR Agent
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+jobs:
+  pr_agent_job:
+    if: ${{ github.event.sender.type != 'Bot' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+      checks: write
+    name: Run pr agent on every pull request, respond to user comments
+    steps:
+      - name: PR Agent action step
+        id: pragent
+        uses: qodo-ai/pr-agent@b249e568e0c0fb6c674ace55fe95d02f62f8f3b3  # pinned to commit SHA (semgrep: was @main)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # DeepSeek via OpenAI-compatible endpoint. Set DEEPSEEK_KEY as a repo or org Actions secret.
+          OPENAI_KEY: ${{ secrets.DEEPSEEK_KEY }}
+          OPENAI.API_BASE: "https://api.deepseek.com/v1"
+          config.model: "deepseek/deepseek-chat"
+          config.fallback_models: '["deepseek/deepseek-chat"]'
+          config.custom_model_max_tokens: "64000"
+          # Auto-triggers
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "true"
+          github_action_config.auto_improve: "true"
+          github_action_config.pr_actions: '["opened", "reopened", "ready_for_review"]'

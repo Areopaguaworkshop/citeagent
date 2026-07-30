@@ -1,0 +1,32 @@
+# ponytail: single-dev defaults. Tune [pr_reviewer]/[pr_code_suggestions] only if reviews get noisy.
+# Drop this file at repo root. CI reads it automatically; CLI reads it from cwd.
+
+[config]
+model = "deepseek/deepseek-chat"
+fallback_models = ["deepseek/deepseek-chat"]
+# DeepSeek's OpenAI-compatible endpoint. Override per-repo if needed.
+# Set OPENAI.API_BASE in CI env, not here (secrets shouldn't live in TOML).
+custom_model_max_tokens = 64000
+
+[pr_reviewer]
+# Tighter output for solo dev — no need for exhaustive nitpicks.
+extra_instructions = """
+Be concise. Focus on: correctness bugs, security, data loss, and broken tests.
+Skip style nits unless they cause bugs. One-line summary per finding.
+If the PR is trivial, say so and pass quickly.
+"""
+require_score_review = false
+num_code_suggestions = 4
+
+[pr_code_suggestions]
+num_code_suggestions = 4
+# ponytail: solo dev — fewer, higher-quality suggestions beat a wall of nits.
+
+[pr_description]
+publish_labels = true
+add_original_user_description = true
+
+[github_app]
+# Used by the GitHub App mode (not the Action). Harmless in Action mode.
+pr_commands = ["/describe", "/review", "/improve"]
+disable_auto_feedback = false
