@@ -1,6 +1,6 @@
 # CiteAgent Project Report
 
-> **Version**: 0.4.0 (npm plugin, TS-native engine) | **Updated**: 2026-08-29
+> **Version**: 0.5.0 (npm plugin, TS-native engine) | **Updated**: 2026-08-30
 > **Status**: Active development — TypeScript-native primary runtime with document ingestion delegated to the optional Python `citeindex` CLI.
 
 ---
@@ -32,16 +32,15 @@ Think of it as "Claude Code for academic scholarship" — instead of writing cod
 ┌──────────────────────────────────────────────────────────────────┐
 │  MCP Clients (Claude Code, Codex, Cursor, Cline, Windsurf)     │
 │  ↳ bunx @ephremyuan/citeagent mcp-server (TypeScript-native)   │
-│  ↳ bunx @ephremyuan/citeagent mcp-server (TypeScript, primary)   │
 ├──────────────────────────────────────────────────────────────────┤
 │  OpenCode Plugin Layer (TypeScript / npm)                        │
-│  @ephremyuan/citeagent v0.4.0                                    │
+│  @ephremyuan/citeagent v0.5.0                                    │
 │  CiteAgentEngine (native TS; ingestion uses a CLI subprocess),  │
 │  SafeHarness hooks, skill/rule deployment, 5 agent configs      │
 ├──────────────────────────────────────────────────────────────────┤
 │  AI Engine (TypeScript CiteAgentEngine only)                      │
-│  29 tools: search, integrity/existence checks, passage lookup,   │
-│  memory, crypto, audit, argument graph, PageIndex, etc.          │
+│  41 tools: scoped search, workflows, integrity checks, passage   │
+│  lookup, memory, crypto, audit, argument graph, PageIndex, etc.  │
 │  All run natively in TS. Only cite_ingest shells out to CLI.    │
 ├──────────────────────────────────────────────────────────────────┤
 │  Ingestion Engine (Python / citeindex CLI — sidecar only)         │
@@ -58,7 +57,7 @@ Think of it as "Claude Code for academic scholarship" — instead of writing cod
 | Layer | Language | Package | Role |
 |-------|----------|---------|------|
 | **MCP Server** | TypeScript | `@ephremyuan/citeagent` (npm) | stdio MCP server via `bunx @ephremyuan/citeagent mcp-server` |
-| **CiteAgentEngine** | TypeScript | Built into npm package | Native TS implementation of 27 tools plus 2 ingestion tools backed by the `citeindex` CLI |
+| **CiteAgentEngine** | TypeScript | Built into npm package | Native TS implementation of 41 tools; ingestion remains an optional `citeindex` CLI integration |
 | **Ingestion** | Python | `citeindex` CLI (sidecar, optional) | PDF/URL/media ingestion — called as subprocess from TS engine |
 | **Storage** | Files + MiniSearch | — | `corpus/.citeindex/` with MiniSearch full-text search + JSONL memory |
 
@@ -84,7 +83,16 @@ Query → CorpusLoader → IndexingAgent → QueryPlanner → RetrievalAgent
 | **GenerationAgent** | Extractive (default) or LLM-based; Chicago citations | ✅ Real |
 | **IntegrityVerifier** | 4-check fail-closed: node exists, hash match, Merkle proof, citation resolved | ✅ Real |
 
-### 2.3 v12 NDJSON Agent Runtime (Removed)
+### 2.3 Paper-scoped workflow and local state
+
+Each research paper gets a metadata-only workspace with approved source IDs,
+source roles, and an audit record. Retrieval and exact-passage lookup are
+scoped to the active paper. The checkpointed workflow (`research` → `outline`
+→ `draft` → `review`) fails closed without verified evidence and stores only
+local session metadata under `.citeagent/` (ignored by git). No corpus text,
+private paths, credentials, or source-derived outputs are packaged or logged.
+
+### 2.4 v12 NDJSON Agent Runtime (Removed)
 
 > **Note:** The `v12_runtime.py` module was a Python-only component that bridged 9 agent adapters over a stdin/stdout JSONL protocol with crash recovery. It has been **removed** along with the entire Python package. The TypeScript `CiteAgentEngine` does **not** use a v12 runtime; it implements the 7 deterministic search-pipeline agents directly in TypeScript (see §2.2 above).
 
@@ -98,7 +106,7 @@ Query → CorpusLoader → IndexingAgent → QueryPlanner → RetrievalAgent
 
 ```
 plugins/opencode-citeagent/
-├── package.json             # @ephremyuan/citeagent v0.4.0
+├── package.json             # @ephremyuan/citeagent v0.5.0
 ├── bin/install.ts           # Plugin installer
 ├── src/
 │   ├── index.ts             # Plugin entry point
@@ -119,6 +127,9 @@ plugins/opencode-citeagent/
 │       ├── corpus-loader.ts # Corpus loader
 │       ├── crypto-engine.ts # Crypto engine
 │       ├── audit-store.ts   # Audit storage
+│       ├── workspaces.ts     # Paper workspaces and approved source scope
+│       ├── workflow.ts       # Checkpointed research workflow
+│       ├── research-state.ts # Local session metadata
 │       ├── argument-graph.ts # Argument graph
 │       ├── csl.ts           # CSL processing
 │       └── memory-store.ts  # Memory store
@@ -279,7 +290,7 @@ The `.citeindex/` tree is the **runtime source of truth**. Legacy folders remain
 
 > **Note:** The Python `citeagent` package has been removed. All runtime dependencies are now TypeScript-only.
 
-### TypeScript Plugin (`@ephremyuan/citeagent` v0.4.0)
+### TypeScript Plugin (`@ephremyuan/citeagent` v0.5.0)
 
 | Dependency | Version | Purpose |
 |------------|---------|---------|
