@@ -4,6 +4,7 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,33 +16,26 @@ def _utc_now() -> datetime:
 
 
 def _locked_save_json(path: str, data: Any, **dump_kwargs: Any) -> None:
-    """Atomically write JSON with exclusive file locking.
-
-    Open with 'r+' (no truncation on open), lock, truncate inside lock,
-    then write. First save (file doesn't exist) uses 'w' mode.
-    """
+    """Atomically write JSON with exclusive file locking."""
     dump_kwargs.setdefault("indent", 2)
     dump_kwargs.setdefault("ensure_ascii", False)
-    try:
-        f = open(path, "r+")  # no truncation on open
-    except FileNotFoundError:
-        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-        f = open(path, "w")  # first save — file doesn't exist yet
-    with f:
-        _locked = False
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    with open(f"{path}.lock", "a", encoding="utf-8") as lock:
         try:
-            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-            _locked = True
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
         except (ImportError, OSError):
             pass  # Windows / unsupported FS — proceed unlocked
+        fd, temp_path = tempfile.mkstemp(dir=directory, prefix=".session-", text=True)
         try:
-            f.seek(0)
-            f.truncate()  # truncate INSIDE the lock
-            json.dump(data, f, **dump_kwargs)
-            f.flush()
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f, **dump_kwargs)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temp_path, path)
         finally:
-            if _locked:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
 
 
 @dataclass
@@ -146,20 +140,48 @@ class SessionManager:
     def _ensure_dir(self) -> None:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
+    def _session_path(self, session_id: str) -> Path:
+        if not session_id or session_id == "active":
+            raise ValueError("Session ID is invalid")
+        base = self.storage_dir.resolve()
+        path = (base / f"{session_id}.json").resolve()
+        if path.parent != base:
+            raise ValueError("Session ID must not contain a path")
+        return path
+
+    def _set_active(self, session_id: str) -> None:
+        self._ensure_dir()
+        self._session_path(session_id)
+        _locked_save_json(str(self.storage_dir / "active.json"), {"session_id": session_id})
+
+    def activate(self, session_id: str) -> None:
+        self._set_active(session_id)
+
+    def load_active(self) -> Optional[CiteIndexSession]:
+        path = self.storage_dir / "active.json"
+        if not path.exists():
+            return None
+        try:
+            with open(path, encoding="utf-8") as f:
+                return self.load_session(json.load(f)["session_id"])
+        except (json.JSONDecodeError, KeyError, ValueError):
+            return None
+
     def create_session(self, session_id: Optional[str] = None) -> CiteIndexSession:
         if session_id is None:
             session_id = f"citeindex-{_utc_now().strftime('%Y%m%d%H%M%S%f')}"
         session = CiteIndexSession(session_id=session_id)
         self.save_session(session)
+        self._set_active(session.session_id)
         return session
 
     def save_session(self, session: CiteIndexSession) -> None:
         self._ensure_dir()
-        path = str(self.storage_dir / f"{session.session_id}.json")
+        path = str(self._session_path(session.session_id))
         _locked_save_json(path, session.to_dict())
 
     def load_session(self, session_id: str) -> Optional[CiteIndexSession]:
-        path = self.storage_dir / f"{session_id}.json"
+        path = self._session_path(session_id)
         if not path.exists():
             return None
         with open(path, encoding="utf-8") as f:
@@ -167,7 +189,7 @@ class SessionManager:
         return CiteIndexSession.from_dict(data)
 
     def delete_session(self, session_id: str) -> bool:
-        path = self.storage_dir / f"{session_id}.json"
+        path = self._session_path(session_id)
         if path.exists():
             path.unlink()
             return True
@@ -177,6 +199,8 @@ class SessionManager:
         self._ensure_dir()
         sessions: List[CiteIndexSession] = []
         for path in self.storage_dir.glob("*.json"):
+            if path.name == "active.json":
+                continue
             try:
                 with open(path, encoding="utf-8") as f:
                     data = json.load(f)

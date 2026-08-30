@@ -8,211 +8,241 @@
  *   bunx @ephremyuan/citeagent@latest install --dry-run
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, cpSync, readdirSync } from "fs"
-import { join } from "path"
-import { homedir } from "os"
-import { execSync } from "child_process"
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  cpSync,
+  readdirSync,
+} from "fs";
+import { join } from "path";
+import { homedir } from "os";
+import { execSync } from "child_process";
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
-const OPENCODE_DIR = join(homedir(), ".config", "opencode")
-const PLUGIN_NAME = "@ephremyuan/citeagent"
-const CONFIG_FILENAME = "citeagent.json"
-const ASSET_PREFIX = "citeagent-"
+const OPENCODE_DIR = join(homedir(), ".config", "opencode");
+const PLUGIN_NAME = "@ephremyuan/citeagent";
+const CONFIG_FILENAME = "citeagent.json";
+const ASSET_PREFIX = "citeagent-";
 
 // ── Flags ───────────────────────────────────────────────────────────────────
 
-const args = process.argv.slice(2)
-const dryRun = args.includes("--dry-run")
-const reset = args.includes("--reset")
-const command = args.find((a) => !a.startsWith("--"))
+const args = process.argv.slice(2);
+const dryRun = args.includes("--dry-run");
+const reset = args.includes("--reset");
+const command = args.find((a) => !a.startsWith("--"));
 
 if (command !== "install") {
-  console.log("Usage: bunx @ephremyuan/citeagent@latest install [--reset] [--dry-run]")
-  process.exit(1)
+  console.log(
+    "Usage: bunx @ephremyuan/citeagent@latest install [--reset] [--dry-run]",
+  );
+  process.exit(1);
 }
 
 function log(msg: string) {
   if (dryRun) {
-    console.log(`[DRY RUN] ${msg}`)
+    console.log(`[DRY RUN] ${msg}`);
   } else {
-    console.log(msg)
+    console.log(msg);
   }
 }
 
 // ── Step 1: Check prerequisites ─────────────────────────────────────────────
 
 function checkPrerequisites(): boolean {
-  let ok = true
+  let ok = true;
 
-  console.log("ℹ️  Python3 not required — CiteAgent runs natively in TypeScript")
+  console.log(
+    "ℹ️  Python3 not required — CiteAgent runs natively in TypeScript",
+  );
 
-  let citeindexFound = false
+  let citeindexFound = false;
   try {
-    execSync("command -v citeindex", { stdio: "pipe", timeout: 10000, shell: "/bin/sh" })
-    console.log("✅ Python citeindex found (CLI on PATH, for document ingestion)")
-    citeindexFound = true
+    execSync("command -v citeindex", {
+      stdio: "pipe",
+      timeout: 10000,
+      shell: "/bin/sh",
+    });
+    console.log(
+      "✅ Python citeindex found (CLI on PATH, for document ingestion)",
+    );
+    citeindexFound = true;
   } catch {
-    console.warn("⚠️  citeindex not found (optional, needed only for document ingestion). Install with:")
-    console.warn("     uv tool install citeindex")
+    console.warn(
+      "⚠️  citeindex not found (optional, needed only for document ingestion). Install with:",
+    );
+    console.warn("     uv tool install citeindex");
   }
 
   try {
-    execSync("tesseract --version", { stdio: "pipe" })
-    console.log("✅ Tesseract OCR found (optional)")
+    execSync("tesseract --version", { stdio: "pipe" });
+    console.log("✅ Tesseract OCR found (optional)");
   } catch {
-    console.warn("⚠️  Tesseract not found (optional, needed for OCR): sudo apt install tesseract-ocr")
+    console.warn(
+      "⚠️  Tesseract not found (optional, needed for OCR): sudo apt install tesseract-ocr",
+    );
   }
 
   try {
-    execSync("ollama --version", { stdio: "pipe" })
-    console.log("✅ Ollama found (for LLM features)")
+    execSync("ollama --version", { stdio: "pipe" });
+    console.log("✅ Ollama found (for LLM features)");
   } catch {
-    console.warn("⚠️  Ollama not found (optional, for chat/generation): https://ollama.ai")
+    console.warn(
+      "⚠️  Ollama not found (optional, for chat/generation): https://ollama.ai",
+    );
   }
 
-  return ok
+  return ok;
 }
 
 // ── Step 2: Add plugin to global opencode.json ──────────────────────────────
 
 function addPluginToConfig(): void {
-  const configPath = join(OPENCODE_DIR, "opencode.jsonc")
+  const configPath = join(OPENCODE_DIR, "opencode.jsonc");
 
-  let content = ""
+  let content = "";
   if (existsSync(configPath)) {
-    content = readFileSync(configPath, "utf-8")
+    content = readFileSync(configPath, "utf-8");
 
     // Strip JSONC comments while respecting strings, so that "//" inside a
     // string literal (e.g. "https://...") is not mistaken for a line comment.
     const stripJsonc = (src: string): string => {
-      let out = ""
-      let i = 0
-      let inString = false
-      let stringQuote = ""
+      let out = "";
+      let i = 0;
+      let inString = false;
+      let stringQuote = "";
       while (i < src.length) {
-        const ch = src[i]
-        const next = src[i + 1]
+        const ch = src[i];
+        const next = src[i + 1];
         if (inString) {
-          out += ch
+          out += ch;
           if (ch === "\\" && i + 1 < src.length) {
-            out += src[i + 1]
-            i += 2
-            continue
+            out += src[i + 1];
+            i += 2;
+            continue;
           }
           if (ch === stringQuote) {
-            inString = false
+            inString = false;
           }
-          i += 1
-          continue
+          i += 1;
+          continue;
         }
         if (ch === '"' || ch === "'") {
-          inString = true
-          stringQuote = ch
-          out += ch
-          i += 1
-          continue
+          inString = true;
+          stringQuote = ch;
+          out += ch;
+          i += 1;
+          continue;
         }
         if (ch === "/" && next === "/") {
-          while (i < src.length && src[i] !== "\n") i += 1
-          continue
+          while (i < src.length && src[i] !== "\n") i += 1;
+          continue;
         }
         if (ch === "/" && next === "*") {
-          i += 2
-          while (i < src.length && !(src[i] === "*" && src[i + 1] === "/")) i += 1
-          i += 2
-          continue
+          i += 2;
+          while (i < src.length && !(src[i] === "*" && src[i + 1] === "/"))
+            i += 1;
+          i += 2;
+          continue;
         }
-        out += ch
-        i += 1
+        out += ch;
+        i += 1;
       }
-      return out
-    }
+      return out;
+    };
 
     // Try strict JSON first; fall back to JSONC stripping.
-    let parsed: any
+    let parsed: any;
     try {
-      parsed = JSON.parse(content)
+      parsed = JSON.parse(content);
     } catch {
       try {
-        parsed = JSON.parse(stripJsonc(content))
+        parsed = JSON.parse(stripJsonc(content));
       } catch {
-        console.warn(`⚠️  Could not parse ${configPath}. Add "${PLUGIN_NAME}" to the "plugin" array manually.`)
-        return
+        console.warn(
+          `⚠️  Could not parse ${configPath}. Add "${PLUGIN_NAME}" to the "plugin" array manually.`,
+        );
+        return;
       }
     }
 
     try {
-      const config = parsed
-      const plugins = (config.plugin ?? []) as string[]
+      const config = parsed;
+      const plugins = (config.plugin ?? []) as string[];
       if (plugins.includes(PLUGIN_NAME)) {
-        console.log(`ℹ️  Plugin "${PLUGIN_NAME}" already in ${configPath}`)
-        return
+        console.log(`ℹ️  Plugin "${PLUGIN_NAME}" already in ${configPath}`);
+        return;
       }
-      plugins.push(PLUGIN_NAME)
-      config.plugin = plugins
+      plugins.push(PLUGIN_NAME);
+      config.plugin = plugins;
       if (!dryRun) {
-        mkdirSync(OPENCODE_DIR, { recursive: true })
-        writeFileSync(configPath, JSON.stringify(config, null, 2))
+        mkdirSync(OPENCODE_DIR, { recursive: true });
+        writeFileSync(configPath, JSON.stringify(config, null, 2));
       }
-      log(`✅ Added "${PLUGIN_NAME}" to ${configPath}`)
+      log(`✅ Added "${PLUGIN_NAME}" to ${configPath}`);
     } catch {
-      console.warn(`⚠️  Could not parse ${configPath}. Add "${PLUGIN_NAME}" to the "plugin" array manually.`)
+      console.warn(
+        `⚠️  Could not parse ${configPath}. Add "${PLUGIN_NAME}" to the "plugin" array manually.`,
+      );
     }
   } else {
     // Create new config
     const config = {
       $schema: "https://opencode.ai/config.json",
       plugin: [PLUGIN_NAME],
-    }
+    };
     if (!dryRun) {
-      mkdirSync(OPENCODE_DIR, { recursive: true })
-      writeFileSync(configPath, JSON.stringify(config, null, 2))
+      mkdirSync(OPENCODE_DIR, { recursive: true });
+      writeFileSync(configPath, JSON.stringify(config, null, 2));
     }
-    log(`✅ Created ${configPath} with plugin "${PLUGIN_NAME}"`)
+    log(`✅ Created ${configPath} with plugin "${PLUGIN_NAME}"`);
   }
 }
 
 // ── Step 3: Deploy assets to global directories ────────────────────────────
 
 function deployAssets(subdir: string, label: string): void {
-  const globalDir = join(OPENCODE_DIR, subdir)
+  const globalDir = join(OPENCODE_DIR, subdir);
   // When built, this file lives at dist/bin/install.js, so assets/ is two levels up.
   // When run directly from bin/install.ts, it's one level up. Try both.
-  let assetDir = join(import.meta.dir, "..", "..", "assets", subdir)
+  let assetDir = join(import.meta.dir, "..", "..", "assets", subdir);
   if (!existsSync(assetDir)) {
-    assetDir = join(import.meta.dir, "..", "assets", subdir)
+    assetDir = join(import.meta.dir, "..", "assets", subdir);
   }
 
   if (!existsSync(assetDir)) {
-    console.warn(`⚠️  No bundled assets found at ${assetDir}`)
-    return
+    console.warn(`⚠️  No bundled assets found at ${assetDir}`);
+    return;
   }
 
-  const files = readdirSync(assetDir).filter((f) => f.endsWith(".md"))
+  const files = readdirSync(assetDir).filter((f) => f.endsWith(".md"));
 
   if (!dryRun) {
-    mkdirSync(globalDir, { recursive: true })
+    mkdirSync(globalDir, { recursive: true });
   }
 
   for (const file of files) {
-    const src = join(assetDir, file)
-    const dest = join(globalDir, `${ASSET_PREFIX}${file}`)
+    const src = join(assetDir, file);
+    const dest = join(globalDir, `${ASSET_PREFIX}${file}`);
     if (!dryRun) {
-      cpSync(src, dest)
+      cpSync(src, dest);
     }
-    log(`✅ Deployed ${label}: ${ASSET_PREFIX}${file}`)
+    log(`✅ Deployed ${label}: ${ASSET_PREFIX}${file}`);
   }
 }
 
 // ── Step 4: Generate agent config ───────────────────────────────────────────
 
 function generateAgentConfig(): void {
-  const configPath = join(OPENCODE_DIR, CONFIG_FILENAME)
+  const configPath = join(OPENCODE_DIR, CONFIG_FILENAME);
 
   if (existsSync(configPath) && !reset) {
-    console.log(`ℹ️  Agent config exists at ${configPath} (use --reset to overwrite)`)
-    return
+    console.log(
+      `ℹ️  Agent config exists at ${configPath} (use --reset to overwrite)`,
+    );
+    return;
   }
 
   const config = {
@@ -220,29 +250,34 @@ function generateAgentConfig(): void {
     agents: {
       "citeagent-researcher": {
         mode: "primary",
-        description: "Academic research agent with citation-verified evidence chains and Merkle integrity",
+        description:
+          "Academic research agent with citation-verified evidence chains and Merkle integrity",
         color: "#4a90d9",
         steps: 30,
       },
       "citeagent-verifier": {
         mode: "subagent",
-        description: "Independent verification auditor — checks Merkle proofs, citation integrity, evidence validity",
+        description:
+          "Independent verification auditor — checks integrity and claim-to-passage alignment",
         color: "#e74c3c",
         hidden: true,
       },
       "citeagent-explore-corpus": {
         mode: "subagent",
-        description: "Fast read-only corpus explorer — search documents, browse trees, check citations",
+        description:
+          "Fast read-only corpus explorer — search documents, browse trees, check citations",
         color: "#f39c12",
       },
       "citeagent-ingestor": {
         mode: "subagent",
-        description: "Document ingestion agent — PDFs, URLs, media into the corpus with Merkle verification",
+        description:
+          "Document ingestion agent — PDFs, URLs, media into the corpus with Merkle verification",
         color: "#2ecc71",
       },
       "citeagent-reviewer": {
         mode: "subagent",
-        description: "Literature review agent — systematic search, gap identification, contradiction mapping",
+        description:
+          "Literature review agent — reproducible corpus search, screening, synthesis, and gap mapping",
         color: "#9b59b6",
       },
     },
@@ -250,47 +285,49 @@ function generateAgentConfig(): void {
     // Add entries to this array to disable specific MCP servers globally.
     // Example: ["websearch"] disables Exa/Tavily web search.
     disabled_mcps: [],
-  }
+  };
 
   if (!dryRun) {
-    writeFileSync(configPath, JSON.stringify(config, null, 2))
+    writeFileSync(configPath, JSON.stringify(config, null, 2));
   }
-  log(`✅ Generated agent config at ${configPath}`)
+  log(`✅ Generated agent config at ${configPath}`);
 }
 
 // ── Step 5: Print next steps ────────────────────────────────────────────────
 
 function printNextSteps(): void {
-  console.log("\n───────────────────────────────────────────────────")
-  console.log("🔬 CiteAgent for OpenCode — Installation Complete")
-  console.log("───────────────────────────────────────────────────")
-  console.log("\nNext steps:")
-  console.log("  1. (Optional) Install citeindex for document ingestion: uv tool install citeindex")
-  console.log("  2. (Optional) Install OCR: sudo apt install tesseract-ocr")
-  console.log("  3. (Optional) Install LLM backend: https://ollama.ai")
-  console.log("  4. Restart OpenCode to activate the plugin")
-  console.log("\nUninstall:")
-  console.log("  - Remove plugin from ~/.config/opencode/opencode.jsonc")
-  console.log(`  - rm ~/.config/opencode/${CONFIG_FILENAME}`)
-  console.log("  - rm ~/.config/opencode/skills/citeagent-*.md")
-  console.log("  - rm ~/.config/opencode/agents/citeagent-*.md")
-  console.log("  - rm ~/.config/opencode/rules/citeagent-*.md")
-  console.log("")
+  console.log("\n───────────────────────────────────────────────────");
+  console.log("🔬 CiteAgent for OpenCode — Installation Complete");
+  console.log("───────────────────────────────────────────────────");
+  console.log("\nNext steps:");
+  console.log(
+    "  1. (Optional) Install citeindex for document ingestion: uv tool install citeindex",
+  );
+  console.log("  2. (Optional) Install OCR: sudo apt install tesseract-ocr");
+  console.log("  3. (Optional) Install LLM backend: https://ollama.ai");
+  console.log("  4. Restart OpenCode to activate the plugin");
+  console.log("\nUninstall:");
+  console.log("  - Remove plugin from ~/.config/opencode/opencode.jsonc");
+  console.log(`  - rm ~/.config/opencode/${CONFIG_FILENAME}`);
+  console.log("  - rm ~/.config/opencode/skills/citeagent-*.md");
+  console.log("  - rm ~/.config/opencode/agents/citeagent-*.md");
+  console.log("  - rm ~/.config/opencode/rules/citeagent-*.md");
+  console.log("");
 }
 
 // ── Run ─────────────────────────────────────────────────────────────────────
 
-console.log("\n🔬 CiteAgent OpenCode Plugin — Installer\n")
+console.log("\n🔬 CiteAgent OpenCode Plugin — Installer\n");
 
 if (!checkPrerequisites()) {
-  console.error("\n❌ Prerequisites not met. Fix the issues above and re-run.")
-  process.exit(1)
+  console.error("\n❌ Prerequisites not met. Fix the issues above and re-run.");
+  process.exit(1);
 }
 
-console.log("")
-addPluginToConfig()
-deployAssets("skills", "skill")
-deployAssets("agents", "agent")
-deployAssets("rules", "rule")
-generateAgentConfig()
-printNextSteps()
+console.log("");
+addPluginToConfig();
+deployAssets("skills", "skill");
+deployAssets("agents", "agent");
+deployAssets("rules", "rule");
+generateAgentConfig();
+printNextSteps();

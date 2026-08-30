@@ -142,6 +142,18 @@ class TestSession:
         assert mgr.delete_session(sess.session_id) is True
         assert mgr.load_session(sess.session_id) is None
 
+    def test_session_rejects_path_traversal(self):
+        from cli_anything.citeindex.core.session import SessionManager
+        mgr = SessionManager(storage_dir=tempfile.mkdtemp())
+        with pytest.raises(ValueError):
+            mgr.create_session("../../outside")
+
+    def test_session_tracks_active_session(self):
+        from cli_anything.citeindex.core.session import SessionManager
+        mgr = SessionManager(storage_dir=tempfile.mkdtemp())
+        created = mgr.create_session("active-test")
+        assert mgr.load_active().session_id == created.session_id
+
 
 class TestProjectModule:
     """Tests for project management module."""

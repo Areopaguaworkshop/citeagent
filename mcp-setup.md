@@ -180,7 +180,7 @@ enabled = true
 bunx @ephremyuan/citeagent@latest install
 ```
 
-This deploys the plugin plus skills, agent configs, rules, and model mappings. The plugin uses the same TypeScript-native `CiteAgentEngine` internally — no subprocess.
+This deploys the plugin plus skills, agent configs, rules, and model mappings. The plugin uses the same TypeScript-native `CiteAgentEngine`; document ingestion optionally invokes the `citeindex` CLI.
 
 ---
 

@@ -36,6 +36,18 @@ describe("CryptoEngine", () => {
     expect(result.valid).toBe(false);
   });
 
+  test("another engine cannot derive the signing key", async () => {
+    const signer = new CryptoEngine(tmpDir);
+    const verifier = new CryptoEngine(tmpDir);
+    const { signature } = await signer.sign("hello", "public-session-id");
+    const result = await verifier.verify(
+      "hello",
+      signature,
+      "public-session-id",
+    );
+    expect(result.valid).toBe(false);
+  });
+
   test("getAuditTrail returns entries", async () => {
     const engine = new CryptoEngine(tmpDir);
     await engine.sign("hello", "session-4");

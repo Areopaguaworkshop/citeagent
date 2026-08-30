@@ -5,6 +5,7 @@ const READ_ONLY_TOOLS = new Set([
   "cite_search",
   "cite_verify",
   "cite_render",
+  "cite_node_lookup",
   "cite_tree",
   "cite_argument_query",
   "cite_memory_save",
@@ -13,6 +14,7 @@ const READ_ONLY_TOOLS = new Set([
   "tree_load",
   "tree_traverse",
   "csl_render",
+  "node_lookup",
 ]);
 
 // Evidence-producing tool names (require verification before COMMIT)

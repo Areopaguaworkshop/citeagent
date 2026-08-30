@@ -1,7 +1,7 @@
 # CiteAgent Project Report
 
-> **Version**: 0.3.9 (npm plugin, TS-native engine) | **Date**: 2026-05-01
-> **Status**: Active development — Python removed; TypeScript-native engine is now the sole runtime. Ingestion delegated to `citeindex` CLI sidecar.
+> **Version**: 0.4.0 (npm plugin, TS-native engine) | **Updated**: 2026-08-29
+> **Status**: Active development — TypeScript-native primary runtime with document ingestion delegated to the optional Python `citeindex` CLI.
 
 ---
 
@@ -17,7 +17,7 @@ Think of it as "Claude Code for academic scholarship" — instead of writing cod
 
 | Promise | Mechanism |
 |---------|-----------|
-| **Zero hallucination** | BM25 deterministic retrieval (no embeddings), mandatory evidence-to-claim mapping, fail-closed integrity verification |
+| **Unsupported-claim reduction** | BM25 deterministic retrieval (no embeddings), evidence-to-claim mapping, fail-closed integrity checks |
 | **Verifiable citations** | Every claim maps to a SHA-256 hashed text node with a full Merkle proof from leaf → document root |
 | **CJK-first** | Vertical text detection, CJK phrase preservation in search, pinyin indexing, auto-OCR language detection |
 | **Multi-format ingestion** | PDF (digital/scanned), URL, DJVU, EPUB, DOCX, video/audio — via separate `citeindex` package |
@@ -35,12 +35,12 @@ Think of it as "Claude Code for academic scholarship" — instead of writing cod
 │  ↳ bunx @ephremyuan/citeagent mcp-server (TypeScript, primary)   │
 ├──────────────────────────────────────────────────────────────────┤
 │  OpenCode Plugin Layer (TypeScript / npm)                        │
-│  @ephremyuan/citeagent v0.3.9                                    │
-│  CiteAgentEngine (native TS, no subprocess), MCP bridge,        │
+│  @ephremyuan/citeagent v0.4.0                                    │
+│  CiteAgentEngine (native TS; ingestion uses a CLI subprocess),  │
 │  SafeHarness hooks, skill/rule deployment, 5 agent configs      │
 ├──────────────────────────────────────────────────────────────────┤
 │  AI Engine (TypeScript CiteAgentEngine only)                      │
-│  25 tools: BM25 search, Merkle verify, CSL render, regex search, │
+│  29 tools: search, integrity/existence checks, passage lookup,   │
 │  memory, crypto, audit, argument graph, PageIndex, etc.          │
 │  All run natively in TS. Only cite_ingest shells out to CLI.    │
 ├──────────────────────────────────────────────────────────────────┤
@@ -58,7 +58,7 @@ Think of it as "Claude Code for academic scholarship" — instead of writing cod
 | Layer | Language | Package | Role |
 |-------|----------|---------|------|
 | **MCP Server** | TypeScript | `@ephremyuan/citeagent` (npm) | stdio MCP server via `bunx @ephremyuan/citeagent mcp-server` |
-| **CiteAgentEngine** | TypeScript | Built into npm package | Native TS implementation of all 25 tools: BM25 search (MiniSearch), Merkle verification, CSL rendering, memory store, audit trail |
+| **CiteAgentEngine** | TypeScript | Built into npm package | Native TS implementation of 27 tools plus 2 ingestion tools backed by the `citeindex` CLI |
 | **Ingestion** | Python | `citeindex` CLI (sidecar, optional) | PDF/URL/media ingestion — called as subprocess from TS engine |
 | **Storage** | Files + MiniSearch | — | `corpus/.citeindex/` with MiniSearch full-text search + JSONL memory |
 
@@ -98,7 +98,7 @@ Query → CorpusLoader → IndexingAgent → QueryPlanner → RetrievalAgent
 
 ```
 plugins/opencode-citeagent/
-├── package.json             # @ephremyuan/citeagent v0.3.9
+├── package.json             # @ephremyuan/citeagent v0.4.0
 ├── bin/install.ts           # Plugin installer
 ├── src/
 │   ├── index.ts             # Plugin entry point
@@ -151,7 +151,7 @@ Agent.md                     # Behavioral guidelines (Karpathy-inspired)
 
 ## 4. MCP Server — Tool Inventory
 
-The MCP server (`bunx @ephremyuan/citeagent mcp-server`) exposes **25 tools** via the TypeScript-native `CiteAgentEngine`:
+The MCP server (`bunx @ephremyuan/citeagent mcp-server`) exposes **29 tools** via the TypeScript-native `CiteAgentEngine`:
 
 ### Fully Implemented
 
@@ -166,6 +166,8 @@ The MCP server (`bunx @ephremyuan/citeagent mcp-server`) exposes **25 tools** vi
 | `merkle_compute` | `_handle_merkle_compute` | `citeindex.ingestion.deterministic` |
 | `merkle_verify` | `_handle_merkle_verify` | SHA-256 proof walk + corpus cross-check |
 | `csl_render` | `_handle_csl_render` | `citeproc-py` formatting |
+| `bibliographic_verify` | `verifyBibliographicRecord` | Opt-in Crossref DOI/title existence check |
+| `node_lookup` | `CiteAgentEngine.callTool` | Exact corpus passage and provenance lookup |
 | `tree_load` | `_handle_tree_load` | `PageIndexRetrievalAgent._load_trees()` |
 | `tree_traverse` | `_handle_tree_traverse` | `PageIndexRetrievalAgent._find_node_in_tree()` |
 | `memory_save` | `_handle_memory_save` | `MemoryStore.save()` |
@@ -215,10 +217,10 @@ The MCP server (`bunx @ephremyuan/citeagent mcp-server`) exposes **25 tools** vi
 | PageIndex retrieval | LLM-driven tree navigation as alternative to BM25 |
 | CSL citation rendering | `citeproc-py` with bundled styles |
 | Crypto (HMAC) | HMAC-SHA256 signing, verification, audit trail chain |
-| SafeHarness (3/4 layers) | Sanitization + tier classification + permission check. Layer 4 deferred |
+| SafeHarness | Input sanitization, tier classification, result checks; OpenCode owns user approvals |
 | ~~v12 runtime protocol~~ | Removed — TS engine implements 7 agents directly (no JSONL bridge) |
 | Ingestion (all 4 pipelines) | Real end-to-end — via `citeindex` CLI sidecar (optional) |
-| MCP server | 25 handlers, all imports work, `TantivyManager` creates indexes |
+| MCP server | 29 handlers; release check runs typecheck, tests, and builds |
 
 ### Partial / Needs LLM Logic
 
@@ -277,7 +279,7 @@ The `.citeindex/` tree is the **runtime source of truth**. Legacy folders remain
 
 > **Note:** The Python `citeagent` package has been removed. All runtime dependencies are now TypeScript-only.
 
-### TypeScript Plugin (`@ephremyuan/citeagent` v0.3.9)
+### TypeScript Plugin (`@ephremyuan/citeagent` v0.4.0)
 
 | Dependency | Version | Purpose |
 |------------|---------|---------|
@@ -410,4 +412,4 @@ Per `instruction/Summary.md`:
 
 ---
 
-*Report generated from project source analysis. Last updated: 2026-05-01.*
+*Report generated from project source analysis. Last updated: 2026-08-29.*

@@ -51,7 +51,7 @@ def _resolve_json(ctx: click.Context, as_json: bool) -> bool:
 
 def _output(data: Any, as_json: bool = False, ctx: Optional[click.Context] = None) -> None:
     """Print output in human or JSON format.
-    
+
     If ctx is provided, checks both command-level as_json and global --json flag.
     """
     effective_json = as_json
@@ -65,11 +65,16 @@ def _get_session_mgr(ctx: click.Context) -> SessionManager:
 
 
 def _get_session(ctx: click.Context) -> Optional[CiteIndexSession]:
-    return ctx.obj.get("current_session")
+    session = ctx.obj.get("current_session")
+    if session is None:
+        session = _get_session_mgr(ctx).load_active()
+        ctx.obj["current_session"] = session
+    return session
 
 
 def _set_session(ctx: click.Context, session: CiteIndexSession) -> None:
     ctx.obj["current_session"] = session
+    _get_session_mgr(ctx).activate(session.session_id)
 
 
 # ── Root group ──
@@ -383,7 +388,7 @@ def export() -> None:
 @export.command("render")
 @click.argument("output_path")
 @click.option("--corpus-root", "-c", default=None, help="Corpus root directory")
-@click.option("--format", "-f", "fmt", default="txt", help="Output format (txt, html, pdf)")
+@click.option("--format", "-f", "fmt", type=click.Choice(["txt"]), default="txt", help="Output format")
 @click.option("--cite-style", default="chicago-author-date", help="Citation style")
 @click.option("--overwrite", is_flag=True, help="Allow overwriting existing file")
 @_json_flag
@@ -443,7 +448,7 @@ def session_list_cmd(ctx: click.Context, active_only: bool, as_json: bool) -> No
     """List saved sessions."""
     mgr = _get_session_mgr(ctx)
     sessions = mgr.list_sessions(include_inactive=not active_only)
-    if as_json:
+    if _resolve_json(ctx, as_json):
         _output([s.to_dict() for s in sessions], as_json, ctx)
     else:
         if not sessions:

@@ -18,11 +18,13 @@ description: Run full verification ladder on a set of evidence items to ensure M
 4. **L2 Hash**: Verify SHA-256 hash matches stored text via `cite_verify`
 5. **L3 Merkle**: Verify Merkle proof from leaf to root via `cite_verify`
 6. **L4 Citation**: Verify citation key resolves to valid CSL record via `cite_render`
-7. **Report**: Generate verification result with pass/fail per item per rung
-8. **Action**: If any item fails any rung → REJECT that item, remove from answer, flag for re-search
+7. **Semantic audit**: Load each exact passage with `cite_node_lookup`, classify the claim/passage pair as `SUPPORTED`, `UNSUPPORTED`, `AMBIGUOUS`, or `RETRIEVAL_FAILED`, quote the decisive excerpt, and persist it with `cite_audit_save`
+8. **Bibliographic existence (optional)**: When the user approves an external check, run `cite_bibliographic_verify`; keep `not_found`, `unresolvable`, and `unavailable` distinct
+9. **Report**: Generate verification result with pass/fail per item per rung and a separate advisory semantic verdict
+10. **Action**: If any item fails L0–L4 → REJECT that item, remove from answer, flag for re-search
 
 ## Fail-Closed Rule
-A single failed evidence item does NOT invalidate other items. Each item is independently verified. However, the overall answer integrity is marked as "degraded" if any item is rejected.
+A single failed evidence item does NOT invalidate other items. Each item is independently verified. However, the overall answer integrity is marked as "degraded" if any item is rejected. Semantic verdicts are advisory and do not override L0–L4 integrity results.
 
 ## Verification Output Format
 ```

@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  plugin:
+    name: TypeScript plugin
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/opencode-citeagent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - name: Audit package contents
+        run: |
+          npm pack --dry-run --json > /tmp/citeagent-pack.json
+          bun -e 'const [pack] = JSON.parse(await Bun.file("/tmp/citeagent-pack.json").text()); const forbidden = pack.files.map((file) => file.path).filter((file) => /(^|\/)(corpus|library|papers|logs|models|memory|diary|diaries|passport|passports|\.citeagent|\.env)(\/|$)/.test(file)); if (forbidden.length) throw new Error(`Private paths in package: ${forbidden.join(", ")}`);'
+      - name: Smoke test the packed MCP server
+        run: |
+          PACK=$(npm pack --pack-destination /tmp)
+          mkdir /tmp/citeagent-package
+          tar -xzf "/tmp/$PACK" -C /tmp/citeagent-package
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' '{"jsonrpc":"2.0","method":"notifications/initialized"}' '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' | bun /tmp/citeagent-package/package/dist/bin/mcp-server.js | grep '"id":2'
+
+  harness:
+    name: Python harness
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent-harness
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+      - run: uv run --extra dev pytest cli_anything/citeindex/tests -q

@@ -50,3 +50,6 @@ htmlcov/
 .pytest_cache/
 # CocoIndex Code (ccc)
 /.cocoindex_code/
+
+# Local CiteAgent paper/workflow/session metadata
+.citeagent/

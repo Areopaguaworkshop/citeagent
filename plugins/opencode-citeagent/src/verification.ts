@@ -1,5 +1,16 @@
 import { getMcpManager } from "./mcp-bridge.js";
-import type { EvidenceItem, VerificationResult, VerificationLadderResult } from "./types.js";
+import type {
+  EvidenceItem,
+  VerificationResult,
+  VerificationLadderResult,
+} from "./types.js";
+
+function parseToolResult(result: string): Record<string, unknown> | null {
+  const parsed: unknown = JSON.parse(result);
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? (parsed as Record<string, unknown>)
+    : null;
+}
 
 export class VerificationLadder {
   private directory: string;
@@ -46,64 +57,6 @@ export class VerificationLadder {
     return { overall: "pending_audit", rungs, evidence };
   }
 
-  async l5LlmAudit(
-    originalQuery: string,
-    evidence: EvidenceItem[],
-  ): Promise<VerificationResult> {
-    const evidenceSummary = evidence
-      .map(
-        (e) =>
-          `Node ${e.node_id}: hash=${e.sha256?.substring(0, 16)}… key=${e.citation_key}`,
-      )
-      .join("\n");
-
-    const auditPrompt =
-      `You are an independent academic evidence auditor. You must verify whether the following evidence supports the original research query.\n\n` +
-      `ORIGINAL QUERY: ${originalQuery}\n\n` +
-      `EVIDENCE ITEMS:\n${evidenceSummary}\n\n` +
-      `For each evidence item, check:\n` +
-      `1. Does this evidence directly address the query?\n` +
-      `2. Are the Merkle hash and citation key consistent?\n` +
-      `3. Is there any sign of fabrication or hallucination?\n\n` +
-      `Respond with APPROVED or REJECTED, followed by a brief reasoning.`;
-
-    try {
-      const response = await fetch(
-        "http://localhost:11434/v1/chat/completions",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "deepseek-v4-flash:cloud",
-            messages: [{ role: "user", content: auditPrompt }],
-            max_tokens: 500,
-          }),
-        },
-      );
-
-      const data = (await response.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
-      };
-      const content = data.choices?.[0]?.message?.content ?? "";
-      const verdict = content.includes("APPROVED");
-
-      return {
-        passed: verdict,
-        level: 5,
-        message: verdict
-          ? "L5 audit approved: independent LLM verified evidence quality"
-          : "L5 audit rejected: independent LLM found evidence concerns",
-        details: content.substring(0, 500),
-      };
-    } catch (error) {
-      return {
-        passed: false,
-        level: 5,
-        message: `L5 audit failed: ${error instanceof Error ? error.message : String(error)}`,
-      };
-    }
-  }
-
   private l0SchemaCheck(item: EvidenceItem): VerificationResult {
     const required: (keyof EvidenceItem)[] = [
       "node_id",
@@ -140,11 +93,13 @@ export class VerificationLadder {
   ): Promise<VerificationResult> {
     try {
       const manager = getMcpManager(this.directory);
-      const result = await manager.callTool("cite_tree_traverse", {
-        node_id: item.node_id,
-      });
+      const result = parseToolResult(
+        await manager.callTool("cite_node_lookup", {
+          node_id: item.node_id,
+        }),
+      );
 
-      if (result && typeof result === "object") {
+      if (result?.node_id === item.node_id) {
         return {
           passed: true,
           level: 1,
@@ -166,16 +121,16 @@ export class VerificationLadder {
     }
   }
 
-  private async l2HashMatch(
-    item: EvidenceItem,
-  ): Promise<VerificationResult> {
+  private async l2HashMatch(item: EvidenceItem): Promise<VerificationResult> {
     try {
       const manager = getMcpManager(this.directory);
-      const result = await manager.callTool("cite_regex_search", {
-        pattern: item.sha256,
-      });
+      const result = parseToolResult(
+        await manager.callTool("cite_node_lookup", {
+          node_id: item.node_id,
+        }),
+      );
 
-      if (result) {
+      if (result?.sha256 === item.sha256) {
         return {
           passed: true,
           level: 2,
@@ -197,29 +152,22 @@ export class VerificationLadder {
     }
   }
 
-  private async l3MerkleProof(
-    item: EvidenceItem,
-  ): Promise<VerificationResult> {
+  private async l3MerkleProof(item: EvidenceItem): Promise<VerificationResult> {
     try {
       const manager = getMcpManager(this.directory);
-      const result = await manager.callTool("cite_merkle_verify", {
-        node_id: item.node_id,
-        proof: item.merkle_proof,
-      });
+      const result = parseToolResult(
+        await manager.callTool("cite_merkle_verify", {
+          node_id: item.node_id,
+          proof: item.merkle_proof,
+        }),
+      );
 
-      if (
-        result &&
-        typeof result === "object" &&
-        "valid" in (result as Record<string, unknown>)
-      ) {
-        const valid = (result as Record<string, unknown>).valid;
-        if (valid === true) {
-          return {
-            passed: true,
-            level: 3,
-            message: `Merkle proof valid for node ${item.node_id}`,
-          };
-        }
+      if (result?.valid === true && result.registry_verified === true) {
+        return {
+          passed: true,
+          level: 3,
+          message: `Merkle proof valid for node ${item.node_id}`,
+        };
       }
 
       return {
@@ -236,21 +184,16 @@ export class VerificationLadder {
     }
   }
 
-  private async l4CitationKey(
-    item: EvidenceItem,
-  ): Promise<VerificationResult> {
+  private async l4CitationKey(item: EvidenceItem): Promise<VerificationResult> {
     try {
       const manager = getMcpManager(this.directory);
-      const result = await manager.callTool("cite_csl_render", {
-        citation_key: item.citation_key,
-      });
+      const result = parseToolResult(
+        await manager.callTool("cite_csl_render", {
+          citation_key: item.citation_key,
+        }),
+      );
 
-      const rendered =
-        result &&
-        typeof result === "object" &&
-        "output" in (result as Record<string, unknown>)
-          ? String((result as Record<string, unknown>).output)
-          : String(result);
+      const rendered = typeof result?.output === "string" ? result.output : "";
 
       if (rendered === item.citation_rendered) {
         return {

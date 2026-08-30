@@ -14,16 +14,10 @@ export interface VerificationResult {
   details?: string;
 }
 
-export interface L5AuditResult {
-  verdict: "approved" | "rejected" | "pending";
-  reasoning: string;
-  audited_evidence: EvidenceItem[];
-  original_query: string;
-  timestamp: string;
-  model_id: string;
-}
-
-export type VerificationLadderOverall = "approved" | "rejected" | "pending_audit";
+export type VerificationLadderOverall =
+  | "approved"
+  | "rejected"
+  | "pending_audit";
 
 export interface VerificationLadderResult {
   overall: VerificationLadderOverall;
@@ -76,36 +70,36 @@ export interface CiteAgentMcpBridge {
 // ---------------------------------------------------------------------------
 
 export interface Ed25519KeyPair {
-  public_key: string;   // base64 encoded
-  private_key: string;  // base64 encoded
+  public_key: string; // base64 encoded
+  private_key: string; // base64 encoded
   created_at: string;
   session_id: string;
 }
 
 export interface ToolSignature {
   tool_name: string;
-  tool_hash: string;      // SHA-256 of tool definition JSON
-  signature: string;       // Ed25519 signature, base64
-  public_key: string;     // signer's public key, base64
+  tool_hash: string; // SHA-256 of tool definition JSON
+  signature: string; // Ed25519 signature, base64
+  public_key: string; // signer's public key, base64
   timestamp: string;
 }
 
 export interface ExecutionReceipt {
   receipt_id: string;
   tool_name: string;
-  input_hash: string;     // SHA-256 of input args JSON
-  output_hash: string;    // SHA-256 of output JSON
-  signature: string;       // Ed25519 signature of (tool_name + input_hash + output_hash)
+  input_hash: string; // SHA-256 of input args JSON
+  output_hash: string; // SHA-256 of output JSON
+  signature: string; // Ed25519 signature of (tool_name + input_hash + output_hash)
   public_key: string;
   capability_token?: string;
-  merkle_proof?: string;   // if applicable
+  merkle_proof?: string; // if applicable
   timestamp: string;
 }
 
 export interface AuditChainEntry {
   sequence_number: number;
-  message_hash: string;    // SHA-256 of this message
-  previous_hash: string;    // SHA-256 of previous message (chain)
+  message_hash: string; // SHA-256 of this message
+  previous_hash: string; // SHA-256 of previous message (chain)
   direction: "request" | "response";
   tool_name: string;
   timestamp: string;
@@ -114,8 +108,8 @@ export interface AuditChainEntry {
 export interface AuditTrail {
   session_id: string;
   entries: AuditChainEntry[];
-  start_hash: string;      // SHA-256 of session init
-  current_hash: string;     // latest chain hash
+  start_hash: string; // SHA-256 of session init
+  current_hash: string; // latest chain hash
 }
 
 export type RiskTier = "read" | "workspace" | "network" | "system";
@@ -154,11 +148,24 @@ export interface StateCheckpoint {
 // ── LTL Monitor Types ──────────────────────────────────────────────────
 
 /** Agent session states in the CiteAgent harness loop. */
-export type AgentState = "idle" | "plan" | "act" | "verify" | "commit" | "done" | "error";
+export type AgentState =
+  | "idle"
+  | "plan"
+  | "act"
+  | "verify"
+  | "commit"
+  | "done"
+  | "error";
 
 /** Events that trigger state transitions. */
 export interface AgentEvent {
-  type: "tool_call" | "tool_result" | "user_message" | "subagent_spawn" | "commit" | "error";
+  type:
+    | "tool_call"
+    | "tool_result"
+    | "user_message"
+    | "subagent_spawn"
+    | "commit"
+    | "error";
   tool_name?: string;
   tool_risk_tier?: "read" | "workspace" | "network" | "system";
   payload?: Record<string, unknown>;
@@ -194,11 +201,3 @@ export interface TraceEntry {
   timestamp: number;
   violations: LTLViolation[];
 }
-
-// ---------------------------------------------------------------------------
-// Re-exports from safeharness.ts and crypto.ts for unified type access
-// ---------------------------------------------------------------------------
-
-export type { RiskTier as SafeHarnessRiskTier, ToolPermission as SafeHarnessToolPermission, SecurityCheckResult as SafeHarnessSecurityCheckResult, StateCheckpoint as SafeHarnessStateCheckpoint } from "./safeharness.js";
-
-export type { Ed25519KeyPair, ToolSignature, ExecutionReceipt, AuditChainEntry, AuditTrail } from "./crypto.js";

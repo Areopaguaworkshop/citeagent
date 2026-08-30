@@ -1,6 +1,6 @@
 {
   "name": "@ephremyuan/citeagent",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -15,11 +15,14 @@
     "build": "bun build src/index.ts --outdir=dist --target=bun --format=esm",
     "build:bin": "bun build bin/install.ts --outfile=dist/bin/install.js --target=bun --format=esm && bun build bin/mcp-server.ts --outfile=dist/bin/mcp-server.js --target=bun --format=esm",
     "build:all": "bun run build && bun run build:bin",
-    "prepublishOnly": "bun run build:all"
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "check": "bun run typecheck && bun test && bun run build:all",
+    "prepublishOnly": "bun run check"
   },
   "dependencies": {
     "@opencode-ai/plugin": "1.14.30",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^3.23.0",
     "minisearch": "^7.1.0"
   },
@@ -40,5 +43,9 @@
     "directory": "plugins/opencode-citeagent"
   },
   "license": "MIT",
-  "description": "OpenCode plugin for CiteAgent — AI research knowledge infrastructure with Merkle-verified retrieval and citation-indexed search"
+  "description": "OpenCode plugin for CiteAgent — AI research knowledge infrastructure with Merkle-verified retrieval and citation-indexed search",
+  "devDependencies": {
+    "@types/bun": "^1.4.0",
+    "typescript": "^7.0.2"
+  }
 }

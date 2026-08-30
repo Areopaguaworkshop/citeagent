@@ -41,6 +41,8 @@ def export_render(
     overwrite: bool = False,
 ) -> Dict[str, Any]:
     """Render citations from the corpus to a file."""
+    if format != "txt":
+        return {"status": "error", "message": f"Unsupported format: {format}"}
     if os.path.exists(output_path) and not overwrite:
         return {
             "status": "error",

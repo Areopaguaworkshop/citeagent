@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { safePath } from "./safe-path.js";
 import type { MemoryEntry } from "./types.js";
 
 export class MemoryStoreEngine {
@@ -38,7 +39,7 @@ export class MemoryStoreEngine {
       tags: tags || [],
     };
 
-    const filePath = path.join(dir, `${threadId}.jsonl`);
+    const filePath = safePath(dir, `${threadId}.jsonl`);
     fs.appendFileSync(filePath, JSON.stringify(entry) + "\n");
 
     return { ...entry, status: "saved" };
@@ -61,13 +62,17 @@ export class MemoryStoreEngine {
     const queryTokens = queryLower.split(/\s+/);
 
     for (const file of files) {
-      const filePath = path.join(dir, file);
+      const filePath = safePath(dir, file);
       if (!fs.existsSync(filePath)) continue;
-      const lines = fs.readFileSync(filePath, "utf-8").split("\n").filter(Boolean);
+      const lines = fs
+        .readFileSync(filePath, "utf-8")
+        .split("\n")
+        .filter(Boolean);
       for (const line of lines) {
         try {
           const entry = JSON.parse(line) as MemoryEntry;
-          const text = `${entry.query} ${entry.response} ${(entry.tags || []).join(" ")}`.toLowerCase();
+          const text =
+            `${entry.query} ${entry.response} ${(entry.tags || []).join(" ")}`.toLowerCase();
           const score = queryTokens.filter((t) => text.includes(t)).length;
           if (score > 0) {
             allEntries.push({ ...entry, _score: score });
@@ -77,7 +82,9 @@ export class MemoryStoreEngine {
     }
 
     allEntries.sort((a, b) => b._score - a._score);
-    const results = allEntries.slice(0, limit).map(({ _score, ...rest }) => rest as MemoryEntry);
+    const results = allEntries
+      .slice(0, limit)
+      .map(({ _score, ...rest }) => rest as MemoryEntry);
 
     return { results, total: allEntries.length };
   }
@@ -89,9 +96,20 @@ export class MemoryStoreEngine {
     tags?: string[];
     thread_id?: string;
     source_ids?: string[];
-  }): Promise<{ entry_id: string; stored: boolean; tier: string; error?: string; path?: string }> {
+  }): Promise<{
+    entry_id: string;
+    stored: boolean;
+    tier: string;
+    error?: string;
+    path?: string;
+  }> {
     if (args.tier === "corpus") {
-      return { entry_id: "", stored: false, tier: "corpus", error: "Corpus tier is immutable — use index_document instead" };
+      return {
+        entry_id: "",
+        stored: false,
+        tier: "corpus",
+        error: "Corpus tier is immutable — use index_document instead",
+      };
     }
 
     if (args.tier === "working") {
@@ -99,14 +117,17 @@ export class MemoryStoreEngine {
       return { entry_id: entryId, stored: true, tier: "working" };
     }
 
-    const tierDir = path.join(this.corpusRoot, ".memory", args.tier);
+    const tierDir = safePath(path.join(this.corpusRoot, ".memory"), args.tier);
     fs.mkdirSync(tierDir, { recursive: true });
 
     const threadId = args.thread_id || "default";
-    const filePath = path.join(tierDir, `${threadId}.jsonl`);
+    const filePath = safePath(tierDir, `${threadId}.jsonl`);
     const entryId = `mem-${args.tier}-${crypto.randomBytes(4).toString("hex")}`;
     const timestamp = new Date().toISOString();
-    const sha256 = crypto.createHash("sha256").update(args.content).digest("hex");
+    const sha256 = crypto
+      .createHash("sha256")
+      .update(args.content)
+      .digest("hex");
 
     const entry = {
       entry_id: entryId,
@@ -129,24 +150,34 @@ export class MemoryStoreEngine {
     query: string,
     tier?: string,
     limit: number = 10,
-  ): Promise<{ entries: Record<string, unknown>[]; total: number; tier: string }> {
+  ): Promise<{
+    entries: Record<string, unknown>[];
+    total: number;
+    tier: string;
+  }> {
     const tiersToSearch = tier ? [tier] : ["episodic", "long_term"];
     const allEntries: Record<string, unknown>[] = [];
     const queryLower = query.toLowerCase();
 
     for (const t of tiersToSearch) {
-      const tierDir = path.join(this.corpusRoot, ".memory", t);
+      const tierDir = safePath(path.join(this.corpusRoot, ".memory"), t);
       if (!fs.existsSync(tierDir)) continue;
 
       const files = fs.readdirSync(tierDir).filter((f) => f.endsWith(".jsonl"));
       for (const file of files) {
-        const filePath = path.join(tierDir, file);
-        const lines = fs.readFileSync(filePath, "utf-8").split("\n").filter(Boolean);
+        const filePath = safePath(tierDir, file);
+        const lines = fs
+          .readFileSync(filePath, "utf-8")
+          .split("\n")
+          .filter(Boolean);
         for (const line of lines) {
           try {
             const entry = JSON.parse(line);
             const text = (entry.content || "").toLowerCase();
-            if (text.includes(queryLower) || queryLower.split(/\s+/).some((t) => text.includes(t))) {
+            if (
+              text.includes(queryLower) ||
+              queryLower.split(/\s+/).some((t) => text.includes(t))
+            ) {
               allEntries.push(entry);
             }
           } catch {}
@@ -163,18 +194,35 @@ export class MemoryStoreEngine {
 
   async consolidate(
     threadId: string = "default",
-  ): Promise<{ consolidated_count: number; from_tier: string; to_tier: string }> {
+  ): Promise<{
+    consolidated_count: number;
+    from_tier: string;
+    to_tier: string;
+  }> {
     const epiDir = path.join(this.corpusRoot, ".memory", "episodic");
     const ltDir = path.join(this.corpusRoot, ".memory", "long_term");
-    if (!fs.existsSync(epiDir)) return { consolidated_count: 0, from_tier: "episodic", to_tier: "long_term" };
+    if (!fs.existsSync(epiDir))
+      return {
+        consolidated_count: 0,
+        from_tier: "episodic",
+        to_tier: "long_term",
+      };
 
     fs.mkdirSync(ltDir, { recursive: true });
 
-    const epiFile = path.join(epiDir, `${threadId}.jsonl`);
-    const ltFile = path.join(ltDir, `${threadId}.jsonl`);
-    if (!fs.existsSync(epiFile)) return { consolidated_count: 0, from_tier: "episodic", to_tier: "long_term" };
+    const epiFile = safePath(epiDir, `${threadId}.jsonl`);
+    const ltFile = safePath(ltDir, `${threadId}.jsonl`);
+    if (!fs.existsSync(epiFile))
+      return {
+        consolidated_count: 0,
+        from_tier: "episodic",
+        to_tier: "long_term",
+      };
 
-    const entries = fs.readFileSync(epiFile, "utf-8").split("\n").filter(Boolean);
+    const entries = fs
+      .readFileSync(epiFile, "utf-8")
+      .split("\n")
+      .filter(Boolean);
     const seenHashes = new Set<string>();
 
     const ltExisting = fs.existsSync(ltFile)
@@ -199,6 +247,10 @@ export class MemoryStoreEngine {
       } catch {}
     }
 
-    return { consolidated_count: consolidated, from_tier: "episodic", to_tier: "long_term" };
+    return {
+      consolidated_count: consolidated,
+      from_tier: "episodic",
+      to_tier: "long_term",
+    };
   }
 }

@@ -13,21 +13,12 @@ export async function createCiteAgentHooks(ctx: {
   await crypto.init(`session-${Date.now()}`)
 
   return {
-    "tool.execute.before": async (input, _output) => {
+    "tool.execute.before": async (input, output) => {
       const toolName = input.tool
 
       const permCheck = safeharness.checkPermission(toolName)
-      if (!permCheck.allowed) {
-        console.warn(
-          `[CiteAgent] SafeHarness blocked tool ${toolName}: ${permCheck.reason}`,
-        )
-        return
-      }
-
-      const sanitized = safeharness.sanitizeInput(toolName, input.args ?? {})
-      if (sanitized.sanitized_input) {
-        input.args = sanitized.sanitized_input
-      }
+      const sanitized = safeharness.sanitizeInput(toolName, output.args ?? {})
+      output.args = sanitized.sanitized
 
       const transition = monitor.transition({
         type: "tool_call",
@@ -39,14 +30,10 @@ export async function createCiteAgentHooks(ctx: {
         const violations = transition.violations
           .filter((v) => v.severity === "error")
           .map((v) => v.message)
-        console.warn(
-          `[CiteAgent] LTL monitor blocked tool ${toolName}:`,
-          violations.join("; "),
-        )
-        return
+        throw new Error(`CiteAgent blocked ${toolName}: ${violations.join("; ")}`)
       }
 
-      crypto.addToAuditChain("request", toolName, input.args ?? {})
+      await crypto.addToAuditChain("request", toolName, output.args ?? {})
     },
 
     "tool.execute.after": async (_input, output) => {
@@ -59,16 +46,14 @@ export async function createCiteAgentHooks(ctx: {
         typeof out === "object" ? out : { text: String(out) },
       )
       if (!verifyResult.allowed) {
-        safeharness.reportAnomaly(
-          `Post-hoc verification failed for ${toolName}: ${verifyResult.reason}`,
-        )
+        safeharness.reportAnomaly()
       }
 
-      crypto.addToAuditChain("response", toolName, {
+      await crypto.addToAuditChain("response", toolName, {
         output: String(out).substring(0, 100),
       })
       try {
-        const receipt = crypto.createExecutionReceipt(
+        const receipt = await crypto.createExecutionReceipt(
           toolName,
           _input.args ?? {},
           out,
@@ -78,8 +63,6 @@ export async function createCiteAgentHooks(ctx: {
         )
       } catch {
       }
-
-      safeharness.checkpoint(toolName, JSON.stringify(_input.args ?? {}))
 
       if (out.includes("merkle_proof") && out.includes("sha256")) {
         try {

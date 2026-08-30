@@ -2,6 +2,19 @@ import crypto from "crypto";
 import type { MerkleVerifyResult } from "./types.js";
 
 export class MerkleEngine {
+  private walkProof(nodeHash: string, proof: string[]): string {
+    let current = nodeHash;
+    for (const step of proof) {
+      const left = step.startsWith("left:");
+      const sibling = step.replace(/^(left|right):/, "");
+      current = crypto
+        .createHash("sha256")
+        .update(left ? sibling + current : current + sibling, "utf-8")
+        .digest("hex");
+    }
+    return current;
+  }
+
   async hashPayload(data: string): Promise<string> {
     return crypto.createHash("sha256").update(data, "utf-8").digest("hex");
   }
@@ -25,11 +38,7 @@ export class MerkleEngine {
     proof: string[],
     root: string,
   ): Promise<MerkleVerifyResult> {
-    let current = nodeHash;
-
-    for (const sibling of proof) {
-      current = await this.hashPair(current, sibling);
-    }
+    const current = this.walkProof(nodeHash, proof);
 
     const valid = current === root;
     return {
@@ -45,13 +54,7 @@ export class MerkleEngine {
     root: string,
     merkleRegistry: Map<string, { root: string }>,
   ): MerkleVerifyResult {
-    let current = nodeHash;
-    for (const sibling of proof) {
-      current = crypto
-        .createHash("sha256")
-        .update(current + sibling, "utf-8")
-        .digest("hex");
-    }
+    const current = this.walkProof(nodeHash, proof);
 
     const basicValid = current === root;
 
@@ -65,7 +68,7 @@ export class MerkleEngine {
     }
 
     return {
-      valid: basicValid,
+      valid: basicValid && registryVerified,
       computed_hash: current,
       expected_hash: root,
       verified_sources: verifiedSources,

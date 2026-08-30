@@ -4,11 +4,17 @@ version = "1.0.0"
 description = "CLI harness for CiteIndex — AI research knowledge infrastructure with Merkle-verified retrieval"
 authors = [{ name = "ajia", email = "yyjfwoaini@gmail.com" }]
 dependencies = [
+    "citeindex>=0.12.0",
     "click>=8.0.0",
     "prompt-toolkit>=3.0.0",
 ]
 readme = "cli_anything/citeindex/README.md"
 requires-python = ">= 3.12"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
 
 [project.scripts]
 cli-anything-citeindex = "cli_anything.citeindex.citeindex_cli:main"

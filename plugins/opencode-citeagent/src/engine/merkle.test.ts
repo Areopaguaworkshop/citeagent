@@ -31,13 +31,39 @@ describe("MerkleEngine", () => {
     expect(result.valid).toBe(true);
   });
 
+  test("verify supports a left sibling", async () => {
+    const engine = new MerkleEngine();
+    const leftHash = await engine.hashPayload("left");
+    const rightHash = await engine.hashPayload("right");
+    const root = await engine.hashPair(leftHash, rightHash);
+    const result = await engine.verify(rightHash, [`left:${leftHash}`], root);
+    expect(result.valid).toBe(true);
+  });
+
   test("verifyWithRegistry checks registry roots", () => {
     const engine = new MerkleEngine();
     const merkleRegistry = new Map<string, { root: string }>();
     merkleRegistry.set("doc1", { root: "testroot" });
-    const result = engine.verifyWithRegistry("testroot", [], "testroot", merkleRegistry);
+    const result = engine.verifyWithRegistry(
+      "testroot",
+      [],
+      "testroot",
+      merkleRegistry,
+    );
     expect(result.valid).toBe(true);
     expect(result.registry_verified).toBe(true);
     expect(result.verified_sources).toContain("doc1");
+  });
+
+  test("verifyWithRegistry rejects an unknown root", () => {
+    const engine = new MerkleEngine();
+    const result = engine.verifyWithRegistry(
+      "unknown",
+      [],
+      "unknown",
+      new Map(),
+    );
+    expect(result.valid).toBe(false);
+    expect(result.registry_verified).toBe(false);
   });
 });

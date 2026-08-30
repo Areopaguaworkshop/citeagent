@@ -37,14 +37,14 @@ Large Language Models write fluently but **cannot cite their sources**. When an 
 
 - **Ingests any source** — PDFs (digital or scanned), URLs, DJVU, EPUB, DOCX, video/audio — into a structured, hash-verified corpus.
 - **Answers questions** with Chicago author-date citations, where every inline reference traces to a specific passage in your documents.
-- **Eliminates hallucination** by design: BM25 deterministic retrieval (no embeddings), mandatory evidence-to-claim mapping, and fail-closed integrity verification.
+- **Reduces unsupported claims** with deterministic BM25 retrieval, evidence-to-claim mapping, and fail-closed integrity checks.
 - **Handles CJK vertical text**, multi-column layouts, footnote isolation, and scanned documents with automatic OCR language detection.
 
 ---
 
 ## Current Status
 
-- **`@ephremyuan/citeagent`** (v0.3.9 on npm) — TypeScript-native plugin with 25 MCP tools, 5 specialized agents, skills, rules, and SafeHarness security hooks. Runs entirely in-process — no Python, no subprocess.
+- **`@ephremyuan/citeagent`** (v0.4.0) — TypeScript-native plugin with 41 MCP tools, 5 specialized agents, skills, rules, paper-scoped research, checkpointed workflows, and SafeHarness security hooks. Document ingestion optionally invokes the Python `citeindex` CLI.
 - **`citeindex`** (v0.12.0+ on PyPI) — the ingestion engine (optional sidecar): PDF, URL, media, DJVU, Office document ingestion with GROBID, MinerU, DSPy, and Merkle verification.
 - MCP server runs as `bunx @ephremyuan/citeagent mcp-server` and works with Claude Code, Codex, Cursor, Cline, Windsurf, and OpenCode.
 
@@ -58,6 +58,7 @@ Large Language Models write fluently but **cannot cite their sources**. When an 
 | [**mcp-setup.md**](./mcp-setup.md) | MCP client setup for Claude Code, Codex, Cursor, Cline, Windsurf |
 | [**docs/project-report.md**](./docs/project-report.md) | Comprehensive project report — architecture, implementation status, tool inventory |
 | [**docs/citeagent-audit-report.md**](./docs/citeagent-audit-report.md) | Detailed audit — migration phases, stub/partial implementations, priority assessment |
+| [**PRIVACY.md**](./PRIVACY.md) | Public-release data boundary and local-state policy |
 
 ---
 
@@ -101,11 +102,11 @@ bunx @ephremyuan/citeagent@latest install
 uv tool install citeindex
 ```
 
-> **No Python required.** All 25 tools run natively in TypeScript via the `CiteAgentEngine`. The `bunx @ephremyuan/citeagent mcp-server` command starts an MCP stdio server that works with any MCP-compatible tool.
+> **No Python required for 39 of 41 tools.** Document ingestion tools optionally invoke the `citeindex` CLI. The `bunx @ephremyuan/citeagent mcp-server` command starts an MCP stdio server that works with any MCP-compatible tool.
 
 ### Use with Claude Code, Codex, Cursor, and other MCP clients
 
-CiteAgent provides a **TypeScript-native MCP server** — no Python required. All tools run in-process. Only `cite_ingest` (document ingestion) optionally shells out to the `citeindex` CLI.
+CiteAgent provides a **TypeScript-native MCP server** — no Python required unless using document ingestion, which invokes the optional `citeindex` CLI.
 
 > **Full setup guide for all tools:** [mcp-setup.md](./mcp-setup.md)
 
@@ -184,6 +185,24 @@ Use any MCP client (Claude Code, Codex, Cursor, OpenCode) with the `search_docum
 
 Use the `cite_search`, `cite_verify`, `cite_render` tools through your MCP client, or the OpenCode plugin's `citeagent-researcher` agent.
 
+### Paper-scoped, checkpointed research
+
+Create a metadata-only paper workspace, approve its corpus sources, and activate
+it. While active, `cite_search` returns results only from approved source IDs.
+No source text is copied into the workspace.
+
+```text
+paper_create    paper_id="my-paper" title="…" question="…"
+paper_add_source paper_id="my-paper" source_id="local-source-id" role="primary"
+paper_use       paper_id="my-paper"
+workflow_start  topic="…"
+workflow_resume workflow_id="…" choice="proceed"
+```
+
+Use `status` and `doctor` to inspect configuration without reading corpus text.
+Use `state_record_session` only for opt-in local session metadata. See
+[PRIVACY.md](./PRIVACY.md) for the release and data boundary.
+
 ---
 
 ## OpenCode Plugin
@@ -195,10 +214,10 @@ The `@ephremyuan/citeagent` npm package provides two things:
 
 The plugin adds:
 - **5 specialized agents** — researcher, verifier, explore-corpus, ingestor, reviewer
-- **25 MCP tools** — `cite_search`, `cite_verify`, `cite_ingest`, `cite_render`, `cite_tree`, `cite_regex_search`, `cite_delete_document`, `cite_tantivy_search`, `cite_tantivy_index`, `cite_memory_*`, and more
+- **41 MCP tools** — `cite_search`, `cite_verify`, `cite_bibliographic_verify`, `cite_node_lookup`, `cite_ingest`, `cite_render`, `cite_tree`, `cite_regex_search`, `cite_paper_*`, `cite_workflow_*`, `cite_state_*`, `cite_status`, `cite_doctor`, and more
 - **3 built-in MCP servers** — websearch (Exa), context7 (docs), grep_app (code search) — auto-connected
 - **Skill & rule assets** auto-deployed on install
-- **Hooks** — SafeHarness (sanitize + permission tiers), verification ladder (L0–L4), crypto audit chain
+- **Hooks** — SafeHarness input sanitization and tier diagnostics, verification ladder (L0–L4), crypto audit chain
 
 ### Install for OpenCode
 
@@ -221,7 +240,7 @@ CiteAgent is a **TypeScript-native** system with an **optional Python sidecar** 
 | Layer | Language | Package | Role |
 |-------|----------|---------|------|
 | **MCP Server** | TypeScript | `@ephremyuan/citeagent` (npm) | stdio MCP server via `bunx @ephremyuan/citeagent mcp-server` |
-| **CiteAgentEngine** | TypeScript | Built into npm package | 25 tools: BM25 search (MiniSearch), Merkle verify, CSL render, memory, crypto, audit, etc. |
+| **CiteAgentEngine** | TypeScript | Built into npm package | 41 tools: BM25 search, paper-scoped retrieval, workflow checkpoints, Merkle and bibliographic verification, exact-passage lookup, CSL render, memory, crypto, audit, etc. |
 | **OpenCode Plugin** | TypeScript | `@ephremyuan/citeagent` (npm) | Agent configs, skills, rules, SafeHarness hooks |
 | **Ingestion** | Python | `citeindex` (PyPI, sidecar) | PDF/URL/media ingestion — called via CLI subprocess |
 | **Storage** | Files + MiniSearch | — | `corpus/.citeindex/` with MiniSearch BM25 + JSONL memory |
@@ -294,7 +313,7 @@ If you use CiteAgent in academic work, please cite:
   title = {CiteAgent: AI Research Agent with Merkle-Verified Retrieval and Citation-Indexed Search},
   year = {2025},
   url = {https://github.com/Areopaguaworkshop/citeagent},
-  note = {npm package: @ephremyuan/citeagent v0.3.9, Python sidecar: citeindex v0.12.0}
+  note = {npm package: @ephremyuan/citeagent v0.4.0, Python sidecar: citeindex v0.12.0}
 }
 ```
 

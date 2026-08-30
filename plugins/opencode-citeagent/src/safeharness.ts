@@ -18,6 +18,8 @@ const DEFAULT_TOOL_PERMISSIONS: ToolPermission[] = [
   { tool_name: "cite_tree_traverse", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "csl_render", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "cite_render", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "node_lookup", risk_tier: "read", requires_approval: false, sandbox_required: false },
+  { tool_name: "cite_node_lookup", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "merkle_verify", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "cite_verify", risk_tier: "read", requires_approval: false, sandbox_required: false },
   { tool_name: "ag_query_claims", risk_tier: "read", requires_approval: false, sandbox_required: false },
@@ -54,6 +56,8 @@ const DEFAULT_TOOL_PERMISSIONS: ToolPermission[] = [
   { tool_name: "cite_safeharness_sanitize", risk_tier: "workspace", requires_approval: false, sandbox_required: false },
 
   // network tier (needs approval)
+  { tool_name: "bibliographic_verify", risk_tier: "network", requires_approval: true, sandbox_required: false },
+  { tool_name: "cite_bibliographic_verify", risk_tier: "network", requires_approval: true, sandbox_required: false },
   { tool_name: "index_document", risk_tier: "network", requires_approval: true, sandbox_required: false },
   { tool_name: "cite_ingest", risk_tier: "network", requires_approval: true, sandbox_required: false },
   { tool_name: "tantivy_search", risk_tier: "network", requires_approval: true, sandbox_required: false },

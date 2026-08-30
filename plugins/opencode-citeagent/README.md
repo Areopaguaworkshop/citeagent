@@ -52,7 +52,7 @@ sudo apt install tesseract-ocr
 | `citeagent-verifier` | subagent (hidden) | Independent Merkle proof audit |
 | `citeagent-explore-corpus` | subagent (hidden) | Fast corpus search and browsing |
 | `citeagent-ingestor` | subagent (hidden) | Document ingestion (PDF, URL, media) |
-| `citeagent-reviewer` | subagent (hidden) | Systematic literature review |
+| `citeagent-reviewer` | subagent (hidden) | Reproducible structured corpus review |
 
 ## Tools
 
@@ -60,6 +60,8 @@ The plugin provides 25+ tools via the native TypeScript CiteAgentEngine:
 
 - `cite_search` — BM25 full-text search
 - `cite_verify` — Merkle proof verification
+- `cite_bibliographic_verify` — opt-in DOI/title existence check through Crossref
+- `cite_node_lookup` — exact passage retrieval for claim-to-evidence audits
 - `cite_render` — CSL citation rendering (Chicago, APA, MLA...)
 - `cite_ingest` — Document ingestion with Merkle hashing
 - `cite_tree` / `cite_tree_traverse` — PageIndex document tree

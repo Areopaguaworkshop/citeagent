@@ -104,7 +104,8 @@ class TestProjectE2E:
             corpus_root=str(tmp_path / "nonexistent"),
             format="txt",
         )
-        assert result.get("status") in ("error", "ok")
+        assert result["status"] == "error"
+        assert "No CSL citation data" in result["message"]
 
 
 # ── CLI Subprocess Tests ──

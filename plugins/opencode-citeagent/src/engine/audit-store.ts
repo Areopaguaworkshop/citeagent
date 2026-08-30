@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { safePath } from "./safe-path.js";
 import type { AuditRecord } from "./types.js";
 
 export class AuditStoreEngine {
@@ -28,14 +29,17 @@ export class AuditStoreEngine {
       saved_at: new Date().toISOString(),
     };
 
-    const filePath = path.join(dir, `${auditId}.json`);
+    const filePath = safePath(dir, `${auditId}.json`);
     fs.writeFileSync(filePath, JSON.stringify(record, null, 2));
 
     return { ...record, status: "saved" };
   }
 
   async retrieve(auditId: string): Promise<AuditRecord | { error: string }> {
-    const filePath = path.join(this.corpusRoot, ".audits", `${auditId}.json`);
+    const filePath = safePath(
+      path.join(this.corpusRoot, ".audits"),
+      `${auditId}.json`,
+    );
     if (!fs.existsSync(filePath)) {
       return { error: `Audit ${auditId} not found` };
     }
