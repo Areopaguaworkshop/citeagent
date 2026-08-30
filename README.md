@@ -86,7 +86,7 @@ The engine is evidence-first; it does not turn search results or model memory in
 2. **Approve sources** — add only permitted local corpus IDs to that paper.
 3. **Retrieve and verify** — search is constrained to approved sources; exact passages, hashes, and Merkle proofs can be checked.
 4. **Checkpoint work** — progress through research → outline → draft → review with `proceed`, `refine`, or `abort` choices.
-5. **Draft responsibly** — use verified evidence; when evidence is absent or altered, the workflow fails closed and reports the next action.
+5. **Keep authorship with the host and scholar** — CiteAgent records and gates the workflow; the host may prepare prose only after the scholar approves the relevant checkpoint. When evidence is absent or altered, startup fails closed and reports the next action.
 
 ---
 
@@ -205,6 +205,23 @@ Use `status` and `doctor` to inspect configuration without reading corpus text.
 Use `state_record_session` only for opt-in local session metadata. See
 [PRIVACY.md](./PRIVACY.md) for the release and data boundary.
 
+### Workflow contract
+
+`workflow_start` requires an active paper, at least one approved source that is
+currently in the corpus, and at least one scoped result whose text hash and
+Merkle proof verify. It then returns a checkpoint at `research`.
+
+| Stage | `workflow_resume(..., "proceed")` | Other choices |
+|---|---|---|
+| `research` | advances to `outline` | `refine` repeats the checkpoint; `abort` deletes it |
+| `outline` | advances to `draft` | `refine` repeats the checkpoint; `abort` deletes it |
+| `draft` | advances to `review` | `refine` repeats the checkpoint; `abort` deletes it |
+| `review` | completes and removes the workflow record | `refine` repeats the checkpoint; `abort` deletes it |
+
+Workflow records are local, serialized for concurrent calls, and expire after
+one hour. `paper_status`, `paper_audit`, `state_wake_up`, `state_snapshot`,
+and `status` provide the corresponding metadata without returning corpus text.
+
 ---
 
 ## Host integrations
@@ -254,6 +271,7 @@ CiteAgent is a **TypeScript-native academic-agent layer** with an **optional Pyt
 - **Fail-closed integrity.** The integrity verifier rejects answers where any hash, Merkle proof, or citation key fails to resolve.
 - **Scholar-controlled scope.** Only sources explicitly approved for the active paper are retrieved; workflow checkpoints require an explicit choice.
 - **Local-first boundary.** Workspace metadata and session state are local. Operational diagnostics avoid returning corpus text.
+- **Workflow is orchestration, not authorship.** CiteAgent gates verified research state for Codex or OpenCode; it does not claim scholarly authority or autonomously publish a paper.
 - **Citation cascade.** GROBID (deterministic) → LLM extraction (fallback) → PDF metadata (last resort).
 
 ### Corpus layout

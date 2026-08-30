@@ -42,7 +42,7 @@ enabled = true
 4. Check exact passages, hashes, Merkle proofs, and bibliography fields.
 5. Advance `research → outline → draft → review` through explicit `proceed`, `refine`, or `abort` checkpoints.
 
-The workflow fails closed when it cannot find verified evidence. Workspace and session data are metadata-only local files; source text remains in the corpus.
+The workflow is a local checkpoint/state machine, not an autonomous paper writer. Codex or OpenCode may prepare prose after the scholar approves a checkpoint; CiteAgent does not claim authorship or publication authority. Workspace and session data are metadata-only local files; source text remains in the corpus.
 
 ```text
 paper_create    paper_id="my-paper" title="…" question="…"
@@ -51,6 +51,13 @@ paper_use       paper_id="my-paper"
 workflow_start  topic="…"
 workflow_resume workflow_id="…" choice="proceed"
 ```
+
+`workflow_start` requires an active paper, an approved source that still exists
+in the corpus, and at least one scoped result with a verified text hash and
+Merkle proof. The workflow begins at `research`; each `proceed` advances one
+stage, `refine` repeats the current checkpoint, and `abort` deletes it. Records
+expire after one hour. Use `paper_status`, `paper_audit`, `state_wake_up`,
+`state_snapshot`, `status`, and `doctor` for local operational metadata.
 
 ## What is included
 
