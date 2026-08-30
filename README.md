@@ -5,7 +5,7 @@
 <h1 align="center">CiteAgent</h1>
 
 <p align="center">
-  <strong>An AI research agent that never hallucinates — every claim is traced, verified, and cited.</strong>
+  <strong>A local, evidence-first academic agent layer for Codex and OpenCode.</strong>
 </p>
 
 <p align="center">
@@ -27,24 +27,27 @@
 
 ---
 
-## Why This Exists
+## An academic agent, not an autonomous scholar
 
 Large Language Models write fluently but **cannot cite their sources**. When an LLM tells you about a study, a historical event, or a legal precedent, there is no way to verify the claim, trace it back to a page, or reproduce the evidence chain. For scholars, this makes LLM output fundamentally unusable in serious work.
 
-**CiteAgent is an AI research agent — like Claude Code, but for academic scholarship.** Instead of writing code, it reads your research materials, indexes them into a Merkle-verified knowledge base, and answers your questions with deterministic, trace-bound citations. Every claim maps to a specific text passage, verified by cryptographic hash, with a full Merkle proof from leaf node to document root.
+**CiteAgent is the academic-paper counterpart to an agent layer such as oh-my-opencode.** It makes Codex and OpenCode useful inside a scholar's local research workspace: they can search approved sources, capture exact passages, check citations, and advance a paper through explicit checkpoints. The scholar remains responsible for questions, interpretation, source approval, authorship, and publication.
+
+It is not a general OpenCode plugin with a research feature. Version 0.5.0 is a host-native academic-agent distribution: OpenCode receives its agents, skills, rules, and hooks; Codex receives the same research capability through a native MCP server. Both use one local, evidence-first engine.
 
 ### What CiteAgent does for researchers
 
 - **Ingests any source** — PDFs (digital or scanned), URLs, DJVU, EPUB, DOCX, video/audio — into a structured, hash-verified corpus.
-- **Answers questions** with Chicago author-date citations, where every inline reference traces to a specific passage in your documents.
+- **Answers questions** from approved local sources, with Chicago author-date citations that trace to exact passages.
 - **Reduces unsupported claims** with deterministic BM25 retrieval, evidence-to-claim mapping, and fail-closed integrity checks.
+- **Keeps paper work local** — metadata-only paper workspaces, source approvals, workflow state, and audits stay on disk; no corpus text is copied into workspace metadata.
 - **Handles CJK vertical text**, multi-column layouts, footnote isolation, and scanned documents with automatic OCR language detection.
 
 ---
 
 ## Current Status
 
-- **`@ephremyuan/citeagent`** (v0.5.0) — TypeScript-native plugin with 41 MCP tools, 5 specialized agents, skills, rules, paper-scoped research, checkpointed workflows, and SafeHarness security hooks. Document ingestion optionally invokes the Python `citeindex` CLI.
+- **`@ephremyuan/citeagent`** (v0.5.0) — host-native academic-agent layer for Codex and OpenCode: 41 MCP tools, paper-scoped retrieval, checkpointed workflows, specialist agents, skills, rules, and SafeHarness hooks. Document ingestion optionally invokes the Python `citeindex` CLI.
 - **`citeindex`** (v0.12.0+ on PyPI) — the ingestion engine (optional sidecar): PDF, URL, media, DJVU, Office document ingestion with GROBID, MinerU, DSPy, and Merkle verification.
 - MCP server runs as `bunx @ephremyuan/citeagent mcp-server` and works with Claude Code, Codex, Cursor, Cline, Windsurf, and OpenCode.
 
@@ -63,7 +66,7 @@ Large Language Models write fluently but **cannot cite their sources**. When an 
 
 ---
 
-## How It Works
+## How academic work moves through CiteAgent
 
 CiteAgent enforces a strict contract: **no claim without evidence, no evidence without a hash, no hash without a Merkle proof.**
 
@@ -77,15 +80,13 @@ Query → BM25 Retrieval → Ranked Evidence → Generation (LLM or extractive)
                                           Answer + Chicago citations + Merkle proofs
 ```
 
-**7 deterministic agents** form the pipeline:
+The engine is evidence-first; it does not turn search results or model memory into paper evidence:
 
-1. **Ingestion** — Parse documents into structural nodes with hierarchical Merkle trees
-2. **Indexing** — Build inverted index, section index, and cross-source links
-3. **Query Planning** — Classify intent, detect ambiguity, emit search plan
-4. **Retrieval** — Three-stage BM25: metadata filter → keyword search → trace filter
-5. **Clarification** — Ask up to 3 questions when the query is ambiguous
-6. **Generation** — Produce answers strictly from evidence, with Chicago citations
-7. **Integrity** — Recompute hashes, verify Merkle proofs, resolve citation keys. Reject if any check fails.
+1. **Create a paper workspace** — record the research question and activate one paper.
+2. **Approve sources** — add only permitted local corpus IDs to that paper.
+3. **Retrieve and verify** — search is constrained to approved sources; exact passages, hashes, and Merkle proofs can be checked.
+4. **Checkpoint work** — progress through research → outline → draft → review with `proceed`, `refine`, or `abort` choices.
+5. **Draft responsibly** — use verified evidence; when evidence is absent or altered, the workflow fails closed and reports the next action.
 
 ---
 
@@ -105,7 +106,7 @@ uv tool install citeindex
 
 > **No Python required for 39 of 41 tools.** Document ingestion tools optionally invoke the `citeindex` CLI. The `bunx @ephremyuan/citeagent mcp-server` command starts an MCP stdio server that works with any MCP-compatible tool.
 
-### Use with Claude Code, Codex, Cursor, and other MCP clients
+### Use natively with Codex or OpenCode
 
 CiteAgent provides a **TypeScript-native MCP server** — no Python required unless using document ingestion, which invokes the optional `citeindex` CLI.
 
@@ -182,9 +183,9 @@ citeindex ingest "https://www.nature.com/articles/s41586-023-06627-7"
 
 Use any MCP client (Claude Code, Codex, Cursor, OpenCode) with the `search_documents` tool, or the CiteAgent plugin's `cite_search` tool.
 
-### Chat with trace-bound citations
+### Research with trace-bound citations
 
-Use the `cite_search`, `cite_verify`, `cite_render` tools through your MCP client, or the OpenCode plugin's `citeagent-researcher` agent.
+In Codex, use the MCP tools directly. In OpenCode, use the installed academic agents and skills. Both paths call the same local engine and evidence policy.
 
 ### Paper-scoped, checkpointed research
 
@@ -206,12 +207,12 @@ Use `state_record_session` only for opt-in local session metadata. See
 
 ---
 
-## OpenCode Plugin
+## Host integrations
 
-The `@ephremyuan/citeagent` npm package provides two things:
+The npm package provides two native host surfaces:
 
-1. **Standalone MCP server** — `bunx @ephremyuan/citeagent mcp-server` — works with any MCP client
-2. **OpenCode plugin** — `bunx @ephremyuan/citeagent install` — adds agents, skills, rules, hooks
+1. **Codex and other MCP hosts** — `bunx @ephremyuan/citeagent mcp-server` exposes the academic engine directly.
+2. **OpenCode** — `bunx @ephremyuan/citeagent install` adds academic agents, skills, rules, and hooks around that engine.
 
 The plugin adds:
 - **5 specialized agents** — researcher, verifier, explore-corpus, ingestor, reviewer
@@ -220,7 +221,7 @@ The plugin adds:
 - **Skill & rule assets** auto-deployed on install
 - **Hooks** — SafeHarness input sanitization and tier diagnostics, verification ladder (L0–L4), crypto audit chain
 
-### Install for OpenCode
+### Install the OpenCode academic-agent layer
 
 ```bash
 bunx @ephremyuan/citeagent@latest install
@@ -228,7 +229,7 @@ bunx @ephremyuan/citeagent@latest install
 
 This deploys agent configs, skills, and rules to `~/.config/opencode/`, and adds the plugin to your OpenCode config. No Python needed.
 
-### Install for Claude Code, Codex, Cursor, Cline, Windsurf
+### Connect Codex and other MCP hosts
 
 All use the same `bunx @ephremyuan/citeagent mcp-server` command. See [mcp-setup.md](./mcp-setup.md) for exact configurations.
 
@@ -236,21 +237,23 @@ All use the same `bunx @ephremyuan/citeagent mcp-server` command. See [mcp-setup
 
 ## Architecture
 
-CiteAgent is a **TypeScript-native** system with an **optional Python sidecar** for ingestion:
+CiteAgent is a **TypeScript-native academic-agent layer** with an **optional Python sidecar** for ingestion. The host is the interface; the local workspace and evidence policy are the product boundary.
 
 | Layer | Language | Package | Role |
 |-------|----------|---------|------|
-| **MCP Server** | TypeScript | `@ephremyuan/citeagent` (npm) | stdio MCP server via `bunx @ephremyuan/citeagent mcp-server` |
-| **CiteAgentEngine** | TypeScript | Built into npm package | 41 tools: BM25 search, paper-scoped retrieval, workflow checkpoints, Merkle and bibliographic verification, exact-passage lookup, CSL render, memory, crypto, audit, etc. |
-| **OpenCode Plugin** | TypeScript | `@ephremyuan/citeagent` (npm) | Agent configs, skills, rules, SafeHarness hooks |
+| **Host surface** | TypeScript | `@ephremyuan/citeagent` (npm) | MCP server for Codex and compatible clients; native assets for OpenCode |
+| **Academic engine** | TypeScript | Built into npm package | 41 tools: paper scope, BM25 retrieval, checkpoints, Merkle/bibliographic verification, exact-passage lookup, CSL, memory, crypto, and audit |
+| **Academic guidance** | Markdown + TypeScript | npm assets | Researcher, verifier, ingestor, reviewer, and corpus-explorer instructions; skills, rules, and SafeHarness hooks |
 | **Ingestion** | Python | `citeindex` (PyPI, sidecar) | PDF/URL/media ingestion — called via CLI subprocess |
-| **Storage** | Files + MiniSearch | — | `corpus/.citeindex/` with MiniSearch BM25 + JSONL memory |
+| **Local paper state** | Files + MiniSearch | — | `corpus/.citeindex/` plus gitignored `.citeagent/` metadata, workflows, sessions, and audits |
 
 ### Key design rules
 
 - **No embeddings.** All retrieval is BM25 keyword search — deterministic and reproducible.
 - **Merkle-verified.** Every text node has a SHA-256 hash. Document integrity is a Merkle tree: `line → paragraph → column → page → document`.
 - **Fail-closed integrity.** The integrity verifier rejects answers where any hash, Merkle proof, or citation key fails to resolve.
+- **Scholar-controlled scope.** Only sources explicitly approved for the active paper are retrieved; workflow checkpoints require an explicit choice.
+- **Local-first boundary.** Workspace metadata and session state are local. Operational diagnostics avoid returning corpus text.
 - **Citation cascade.** GROBID (deterministic) → LLM extraction (fallback) → PDF metadata (last resort).
 
 ### Corpus layout

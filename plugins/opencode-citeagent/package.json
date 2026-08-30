@@ -28,7 +28,8 @@
   },
   "keywords": [
     "opencode",
-    "opencode-plugin",
+    "codex",
+    "mcp",
     "academic",
     "citation",
     "merkle",
@@ -43,7 +44,7 @@
     "directory": "plugins/opencode-citeagent"
   },
   "license": "MIT",
-  "description": "OpenCode plugin for CiteAgent — AI research knowledge infrastructure with Merkle-verified retrieval and citation-indexed search",
+  "description": "Local, evidence-first academic agent layer for Codex and OpenCode with paper-scoped, Merkle-verified retrieval",
   "devDependencies": {
     "@types/bun": "^1.4.0",
     "typescript": "^7.0.2"

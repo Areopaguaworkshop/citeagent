@@ -1,91 +1,72 @@
 # @ephremyuan/citeagent
 
-OpenCode plugin for CiteAgent — AI research knowledge infrastructure with Merkle-verified retrieval, citation-indexed search, and trace-bound chat.
+**A local, evidence-first academic agent layer for Codex and OpenCode.**
+
+CiteAgent v0.5.0 is not a general-purpose OpenCode plugin. It gives coding-agent hosts an academic-paper workspace: approved-source retrieval, exact-passage citation checks, Merkle integrity verification, and explicit research checkpoints. It plays the academic role that an agent-layer distribution plays for software work.
+
+The scholar remains responsible for the research question, source approval, interpretation, authorship, and publication decisions. CiteAgent never treats a search result or model memory as paper evidence.
 
 ## Install
+
+### OpenCode
 
 ```bash
 bunx @ephremyuan/citeagent@latest install
 ```
 
-The installer automatically:
-- Adds the plugin to `~/.config/opencode/opencode.jsonc`
-- Deploys skills to `~/.config/opencode/skills/`
-- Deploys agent configs to `~/.config/opencode/agents/`
-- Deploys rules to `~/.config/opencode/rules/`
-- Generates agent model mappings in `~/.config/opencode/citeagent.json`
+The installer adds the OpenCode integration, academic agents, skills, rules, and SafeHarness hooks. It does not upload or copy your corpus.
 
-### Options
+### Codex and other MCP clients
 
-| Flag | Description |
-|------|-------------|
-| `--reset` | Overwrite existing configuration |
-| `--dry-run` | Simulate install without writing files |
-
-## Prerequisites
+Run the local MCP server:
 
 ```bash
-# Optional: citeindex CLI for document ingestion (PDF, URL, media)
-# If not installed, cite_ingest/cite_tantivy_index will warn but other tools work fine
+bunx @ephremyuan/citeagent mcp-server
+```
+
+For Codex, add this to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.citeagent]
+command = "bunx"
+args = ["@ephremyuan/citeagent", "mcp-server"]
+env = { CITEAGENT_CORPUS_ROOT = "./corpus" }
+enabled = true
+```
+
+## Academic workflow
+
+1. Create a paper workspace and record its question.
+2. Approve the local corpus source IDs the paper may use.
+3. Search and retrieve only within that approved scope.
+4. Check exact passages, hashes, Merkle proofs, and bibliography fields.
+5. Advance `research → outline → draft → review` through explicit `proceed`, `refine`, or `abort` checkpoints.
+
+The workflow fails closed when it cannot find verified evidence. Workspace and session data are metadata-only local files; source text remains in the corpus.
+
+```text
+paper_create    paper_id="my-paper" title="…" question="…"
+paper_add_source paper_id="my-paper" source_id="local-source-id" role="primary"
+paper_use       paper_id="my-paper"
+workflow_start  topic="…"
+workflow_resume workflow_id="…" choice="proceed"
+```
+
+## What is included
+
+- **41 MCP tools**: paper scope, BM25/regex retrieval, exact passage lookup, Merkle and bibliographic checks, CSL rendering, ingestion, memory, audit, state, workflow, `status`, and `doctor`.
+- **OpenCode academic agents**: researcher, verifier, corpus explorer, ingestor, and reviewer.
+- **Local-first controls**: approved-source scoping, fail-closed workflow gates, structured errors, and diagnostics that do not return corpus text.
+
+All tools except the two optional `citeindex` ingestion integrations run natively in TypeScript. Install `citeindex` only if you need to ingest PDFs, URLs, or media:
+
+```bash
 uv tool install citeindex
-
-# Optional: OCR support
-sudo apt install tesseract-ocr
-
-# Optional: LLM backend (for chat/generation)
-# https://ollama.ai
 ```
 
-> No Python runtime required — all citation tools run natively in TypeScript.
+## Privacy and release boundary
 
-## Uninstall
-
-1. Remove `"@ephremyuan/citeagent"` from `~/.config/opencode/opencode.jsonc` `plugin` array
-2. Remove config: `rm ~/.config/opencode/citeagent.json`
-3. Remove assets: `rm ~/.config/opencode/skills/citeagent-*.md ~/.config/opencode/agents/citeagent-*.md ~/.config/opencode/rules/citeagent-*.md`
-
-## Agents
-
-| Agent | Mode | Description |
-|-------|------|-------------|
-| `citeagent-researcher` | primary | Academic research with citation-verified evidence |
-| `citeagent-verifier` | subagent (hidden) | Independent Merkle proof audit |
-| `citeagent-explore-corpus` | subagent (hidden) | Fast corpus search and browsing |
-| `citeagent-ingestor` | subagent (hidden) | Document ingestion (PDF, URL, media) |
-| `citeagent-reviewer` | subagent (hidden) | Reproducible structured corpus review |
-
-## Tools
-
-The plugin provides 25+ tools via the native TypeScript CiteAgentEngine:
-
-- `cite_search` — BM25 full-text search
-- `cite_verify` — Merkle proof verification
-- `cite_bibliographic_verify` — opt-in DOI/title existence check through Crossref
-- `cite_node_lookup` — exact passage retrieval for claim-to-evidence audits
-- `cite_render` — CSL citation rendering (Chicago, APA, MLA...)
-- `cite_ingest` — Document ingestion with Merkle hashing
-- `cite_tree` / `cite_tree_traverse` — PageIndex document tree
-- `cite_argument_query` — Argument graph (claims, contradictions)
-- `cite_memory_*` — 4-tier persistent memory (working → episodic → long_term → corpus)
-- And more (see source)
-
-## Architecture
-
-```
-User question
-     │
-     ▼
-citeagent-researcher (OpenCode agent)
-     │
-     ├── cite_search ──→ CiteAgentEngine (TypeScript, in-process)
-     ├── cite_verify ──→ CiteAgentEngine
-     ├── cite_ingest ──→ citeindex CLI (optional sidecar)
-     │
-     ├── @citeagent-explore-corpus (OpenCode subagent)
-     └── @citeagent-verifier (OpenCode subagent)
-```
-
-All tools except `cite_ingest`/`cite_tantivy_index` run natively in TypeScript — no Python subprocess or MCP stdio bridge required. The engine reads the on-disk corpus directly and implements BM25 search (MiniSearch), Merkle verification, CSL rendering, memory store, and audit trail in-process.
+The npm package contains code and public agent assets only. It excludes corpora, paper artifacts, local session/workflow metadata, logs, models, credentials, and private paths. See the repository's [privacy policy](https://github.com/Areopaguaworkshop/citeagent/blob/master/PRIVACY.md).
 
 ## License
 
