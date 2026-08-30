@@ -44,7 +44,7 @@ Large Language Models write fluently but **cannot cite their sources**. When an 
 
 ## Current Status
 
-- **`@ephremyuan/citeagent`** (v0.4.0) — TypeScript-native plugin with 41 MCP tools, 5 specialized agents, skills, rules, paper-scoped research, checkpointed workflows, and SafeHarness security hooks. Document ingestion optionally invokes the Python `citeindex` CLI.
+- **`@ephremyuan/citeagent`** (v0.5.0) — TypeScript-native plugin with 41 MCP tools, 5 specialized agents, skills, rules, paper-scoped research, checkpointed workflows, and SafeHarness security hooks. Document ingestion optionally invokes the Python `citeindex` CLI.
 - **`citeindex`** (v0.12.0+ on PyPI) — the ingestion engine (optional sidecar): PDF, URL, media, DJVU, Office document ingestion with GROBID, MinerU, DSPy, and Merkle verification.
 - MCP server runs as `bunx @ephremyuan/citeagent mcp-server` and works with Claude Code, Codex, Cursor, Cline, Windsurf, and OpenCode.
 
@@ -313,7 +313,7 @@ If you use CiteAgent in academic work, please cite:
   title = {CiteAgent: AI Research Agent with Merkle-Verified Retrieval and Citation-Indexed Search},
   year = {2025},
   url = {https://github.com/Areopaguaworkshop/citeagent},
-  note = {npm package: @ephremyuan/citeagent v0.4.0, Python sidecar: citeindex v0.12.0}
+  note = {npm package: @ephremyuan/citeagent v0.5.0, Python sidecar: citeindex v0.12.0}
 }
 ```
 
