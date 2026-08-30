@@ -59,6 +59,7 @@ Large Language Models write fluently but **cannot cite their sources**. When an 
 | [**docs/project-report.md**](./docs/project-report.md) | Comprehensive project report — architecture, implementation status, tool inventory |
 | [**docs/citeagent-audit-report.md**](./docs/citeagent-audit-report.md) | Detailed audit — migration phases, stub/partial implementations, priority assessment |
 | [**PRIVACY.md**](./PRIVACY.md) | Public-release data boundary and local-state policy |
+| [**CHANGELOG.md**](./CHANGELOG.md) | Release history, changes, and fixes |
 
 ---
 
